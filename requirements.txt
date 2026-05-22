@@ -1,0 +1,7 @@
+telethon
+feedparser
+groq
+schedule
+pillow
+arabic-reshaper
+python-bidi

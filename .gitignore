@@ -1,0 +1,8 @@
+my_session.session
+session_string.txt
+*.session
+__pycache__/
+instagram_post_*.txt
+seen_articles.json
+latest_card.png
+test_card.png
