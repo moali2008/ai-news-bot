@@ -80,13 +80,11 @@ async def monitor_loop():
         await asyncio.sleep(CHECK_INTERVAL)
 
 async def main():
-    if TELEGRAM_SESSION:
-        await client.connect()
-        print("Connected via session string.")
-    else:
-        await client.start(phone="+9647763692061", code_callback=get_code, password="yaali208")
-        print("Connected via login.")
-
+    await client.connect()
+    if not await client.is_user_authorized():
+        print("Session invalid or missing!")
+        return
+    print("Connected successfully.")
     await monitor_loop()
 
 if __name__ == "__main__":
