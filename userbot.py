@@ -7,9 +7,8 @@ from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
 
 from news_fetcher import fetch_ai_news
-from content_writer import write_card_content, write_telegram_post, write_instagram_post
-from card_generator import create_news_card, detect_company
-from publisher import save_instagram_post
+from content_writer import write_telegram_post, write_instagram_post
+from publisher import get_logo_path, save_instagram_post
 
 TELEGRAM_API_ID   = int(os.environ.get("TELEGRAM_API_ID",   "34470238"))
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH",     "d4e87d995c9e0083a9ad280e0f289621")
@@ -34,18 +33,16 @@ def save_seen(seen):
 
 async def post_article(article):
     try:
-        title_ar, body_ar = write_card_content(article)
-        company_info = detect_company(article["title"], article.get("description", ""))
-        card_path    = create_news_card(title_ar, body_ar, company_info, "latest_card.png")
-        caption      = write_telegram_post(article)
+        caption   = write_telegram_post(article)
+        logo_path = get_logo_path(article["title"], article.get("description", ""))
 
-        await client.send_file(TELEGRAM_CHANNEL, card_path, caption=caption)
+        await client.send_file(TELEGRAM_CHANNEL, logo_path, caption=caption)
 
         ig_post = write_instagram_post(article)
         ts = datetime.now().strftime("%Y%m%d_%H%M")
         save_instagram_post(ig_post, ts)
 
-        print(f"[OK] {title_ar}")
+        print(f"[OK] {article['title'][:50]}")
     except FloodWaitError as e:
         await asyncio.sleep(e.seconds)
     except Exception as e:
