@@ -10881,8 +10881,9 @@ route('me',()=>{const s=olSess();if(!s||s.role!=='s'){after(()=>go('login'));ret
    <div class="card"><div class="eyebrow">صفّي</div><h2>${esc(me.section)}</h2><p>👨‍🏫 ${esc(me.teacher)}<br>🏫 ${esc(me.school)}</p>${me.active?'':'<div class="olmsg info">الانضمام مسكّر حالياً، بس حسابك شغال.</div>'}</div>
    <div class="card"><h3>📢 إعلانات المدرس</h3>${me.ann.length?me.ann.map(a=>`<div class="olann">${esc(a.b)}<br><small style="color:var(--dim)">${olWhen(a.at)}</small></div>`).join(''):'<p style="color:var(--dim)">ماكو إعلانات بعد.</p>'}</div>
    <div class="card"><h3>📝 اختبارات المدرس</h3>${me.quizzes.length?me.quizzes.map(q=>`<button class="item" data-go="oq-${esc(q.id)}"><span>${q.done?'✅':'🆕'}</span><span><b>${esc(q.title)}</b><br><small>${q.n} سؤال ${q.done?'· درجتك '+q.done.s+' من '+q.done.t:'· ما سلّمته بعد'}</small></span><span>›</span></button>`).join(''):'<p style="color:var(--dim)">ماكو اختبارات مفتوحة.</p>'}</div>
+   <div class="card"><h3>📚 الواجبات والمحادثة</h3><div class="row" style="gap:.5rem;flex-wrap:wrap"><button class="btn pri" data-go="hw">📚 واجباتي <span id="olBHw"></span></button><button class="btn" data-go="chat">💬 راسل الأستاذ <span id="olBMsg"></span></button></div></div>
    <div class="card"><h3>☁️ المزامنة</h3><p>تقدّمك (${bookProg()}%) يوصل للمدرس تلقائياً. آخر مزامنة: <b>${olWhen((olSess()||{}).syncAt)}</b></p><div class="row" style="gap:.5rem;flex-wrap:wrap"><button class="btn" id="olSyncNow">🔄 زامن هسه</button><button class="btn" id="olOut2">تسجيل خروج</button></div><p style="color:var(--dim);font-size:.88rem;margin-top:.6rem">🔐 حتى تدخل من جهاز ثاني: نفس كود الشعبة <b class="mono">${esc(s.code||'')}</b> + نفس اسمك + رمزك السري. إذا نسيت الرمز، المدرس يگدر يصفّره إلك.</p></div></div>`;
-  me.quizzes.forEach(q=>{ST.olSeenQ[q.id]=1});save();
+  me.quizzes.forEach(q=>{ST.olSeenQ[q.id]=1});save();if(window.olBadges)olBadges(true);
   $('#olSyncNow').onclick=async()=>{olDirty=true;await olPush();toast(olSyncState==='ok'?'✅ تزامن':'ما گدرنا نزامن هسه')};$('#olOut2').onclick=olLogout}
  catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div><button class="btn" data-go="me" style="margin-top:.6rem">حاول مرة ثانية</button>`}});
  return{html:`<div class="eyebrow">حسابي</div><h1 style="font-size:2rem;margin:.2rem 0 1rem">🎓 ${esc(s.name)}</h1><div id="olMeBox"><p>نجيب معلومات صفّك…</p></div>`,crumbs:[['me','صفّي']]}});
@@ -10962,7 +10963,7 @@ route('tp',()=>{if(olNeedT())return{html:''};const s=olTS();
  after(async()=>{const box=$('#tpBox');try{const me=await olTme(true);if(CUR!=='tp')return;OLC.secs=me.sections;
   const tot=me.sections.reduce((a,x)=>a+(+x.count||0),0);
   box.innerHTML=`<div class="tpk"><div class="k"><b>${me.sections.length}</b><span>شعبة</span></div><div class="k"><b>${tot}</b><span>طالب مرتبط</span></div><div class="k"><b>${olRdy().length}</b><span>فصول جاهزة</span></div></div>
-  <div class="tptools"><button class="btn pri" data-go="tpq">📝 اختبارات الشعب</button><button class="btn" data-go="tpc">📊 مقارنة الشعب</button><button class="btn" data-go="home">📖 تصفح الكتاب مثل الطالب</button></div>
+  <div class="tptools"><button class="btn pri" data-go="tpq">📝 اختبارات الشعب</button><button class="btn pri" data-go="tph">📚 الواجبات <span id="olBUng"></span></button><button class="btn pri" data-go="tpm">💬 المحادثات <span id="olBTm"></span></button><button class="btn" data-go="tpc">📊 مقارنة الشعب</button><button class="btn" data-go="home">📖 تصفح الكتاب مثل الطالب</button></div>
   <h2 style="margin-top:1.2rem">الشعب</h2>${me.sections.length?'':'<div class="card" style="margin-bottom:1rem"><p>ما عندك شعب بعد. الأسهل: اضغط الزر وراح نسوي شعبتين جاهزات.</p><button class="btn pri" id="tpAB">⚡ سوّي «الشعبة A» و«الشعبة B»</button></div>'}
   <div class="tpg">${me.sections.map(x=>{const link=olJoinLink(x.code);return`<div class="card tpsec"><div class="row" style="justify-content:space-between"><h3>${esc(x.label)}</h3><span class="pill">${x.count} طالب${x.active?'':' · مسكّرة'}</span></div>
    <div class="code" title="كود الانضمام">${esc(x.code)}</div>${link?`<div class="qrbox" style="justify-self:center">${typeof qrSvg==='function'?qrSvg(link):''}</div>`:''}
@@ -10986,7 +10987,7 @@ route('tp',()=>{if(olNeedT())return{html:''};const s=olTS();
   $('#tpAnn').onsubmit=async ev=>{ev.preventDefault();const t=$('#tpAt').value.trim();if(t.length<2)return toast('اكتب الإعلان');try{await olRpc('t_announce',{p_token:s.token,p_section:$('#tpAs').value,p_body:t});$('#tpAt').value='';toast('✅ انشر الإعلان للشعبة')}catch(e){toast(e.message,4000)}};
   $('#tpHost').onsubmit=ev=>{ev.preventDefault();const u=$('#tpHu').value.trim();if(u&&!/^https:\/\/[^\s"'<>]+$/.test(u))return toast('لازم يبدي بـ https://');try{u?localStorage.setItem('dfbook.host',u):localStorage.removeItem('dfbook.host')}catch(e){}render()};
   $('#tpPw').onsubmit=async ev=>{ev.preventDefault();const n=$('#tpPn').value;if(n.length<8||olStrength(n)<2){$('#tpPm').innerHTML=`<div class="olmsg bad">الجديدة ضعيفة: 8+ أحرف مع أرقام ورموز.</div>`;return}try{await olRpc('t_change_pass',{p_token:s.token,p_old:$('#tpPo').value,p_new:n});$('#tpPm').innerHTML=`<div class="olmsg ok">✅ تغيّرت</div>`}catch(e){$('#tpPm').innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}};
-  $('#tpOut').onclick=olLogout}
+  $('#tpOut').onclick=olLogout;if(window.olBadges)olBadges(true)}
  catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div><button class="btn" data-go="tp" style="margin-top:.6rem">حاول مرة ثانية</button>`}});
  return{html:`<div class="eyebrow">بوابة المدرس</div><h1 style="font-size:2rem;margin:.2rem 0 .2rem">👨‍🏫 ${esc(s.name)}</h1><p style="color:var(--dim)">${esc(s.school)}</p><div id="tpBox"><p>نحمّل شعبك…</p></div>`,crumbs:[['tp','بوابة المدرس']]}});
 
@@ -11021,7 +11022,7 @@ route('tps-([0-9a-f-]{36})-([0-9a-f-]{36})',(sec,sid)=>{if(olNeedT())return{html
   <div class="card"><h3>الفصول</h3><div class="tpt"><table style="min-width:30rem"><thead><tr><th>الفصل</th><th>التقدّم</th><th>الدروس</th><th>التمارين</th><th>اختبار الفصل</th><th>المختبر</th></tr></thead><tbody>${R.map(c=>{const k=per(c),q=p.quiz&&p.quiz[c];return`<tr><td>${c}. ${esc(BOOK.ch[c].t)}</td><td><span class="tpbar"><i style="width:${+(p.ch&&p.ch[c])||0}%"></i></span> ${+(p.ch&&p.ch[c])||0}%</td><td>${k.l}/${k.L}</td><td>${k.x}/${k.X}</td><td>${q?q.b+'%':'—'}</td><td>${p.lab&&p.lab[c]?p.lab[c]+'%':'—'}</td></tr>`}).join('')}</tbody></table></div></div>
   <div class="card" style="margin-top:1rem"><h3>آخر ما سوّاه</h3>${recent.length?recent.map(k=>{const u=typeof unitTitle==='function'?unitTitle(k):['•',k];return`<div>${u[0]} ${esc(u[1])} <small style="color:var(--dim)">${olWhen(p.done[k])}</small></div>`}).join(''):'<p style="color:var(--dim)">ما زامن إنجازات بعد.</p>'}</div>
   <div class="card" style="margin-top:1rem"><h3>اختبارات المدرس</h3>${r.quiz.length?r.quiz.map(x=>`<div>📝 ${esc(((OLC.quizzes||[]).find(q=>q.id===x.q)||{}).title||'اختبار')}: <b>${x.s}/${x.t}</b></div>`).join(''):'<p style="color:var(--dim)">ما سلّم اختبارات.</p>'}</div>
-  <div class="card" style="margin-top:1rem"><h3>إدارة</h3><div class="row" style="gap:.5rem;flex-wrap:wrap"><button class="btn" id="tpsPin">🔑 صفّر الرمز السري</button><button class="btn" id="tpsDel">🗑 احذف الطالب</button></div><div id="tpsMsg" style="margin-top:.5rem"></div></div>`;
+  <div class="card" style="margin-top:1rem"><h3>إدارة</h3><div class="row" style="gap:.5rem;flex-wrap:wrap"><button class="btn pri" data-go="tpm-${esc(sid)}">💬 راسله</button><button class="btn" id="tpsPin">🔑 صفّر الرمز السري</button><button class="btn" id="tpsDel">🗑 احذف الطالب</button></div><div id="tpsMsg" style="margin-top:.5rem"></div></div>`;
   olConfirm($('#tpsPin'),'متأكد؟ يطلع من أجهزته',async()=>{try{const pin=await olRpc('t_student_reset_pin',{p_token:s.token,p_student:sid});$('#tpsMsg').innerHTML=`<div class="olmsg ok">الرمز الجديد: <b class="mono" style="font-size:1.3rem">${esc(pin)}</b> — أعطيه للطالب.</div>`}catch(e){$('#tpsMsg').innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
   olConfirm($('#tpsDel'),'متأكد؟ ينحذف تقدّمه نهائياً',async()=>{try{await olRpc('t_student_remove',{p_token:s.token,p_student:sid});delete OLC.dash[sec];OLC.tme=null;toast('انحذف الطالب');go('tpd-'+sec)}catch(e){$('#tpsMsg').innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}})}
  catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
@@ -11087,6 +11088,124 @@ CHANGES.unshift({v:6,d:'2026-11-18',t:'الصف المباشر: دخول الط�
 'الاختبارات (10): منشئ اختبار من بنك الكتاب (فصل وعدد، خيارات مخلوطة، رقم الصفحة) • أسئلة يدوية • مسودة ومعاينة قبل النشر • نشر لشعبة أو لكل الشعب • التصحيح بالسيرفر (الجواب ما يوصل للطالب قبل التسليم) • محاولة وحدة لكل طالب • فتح/غلق/حذف • نتائج مرتبة مع تصدير • تحليل كل سؤال (نسبة الصح وأكثر جواب غلط وتنبيه لإعادة الشرح) • مراجعة الطالب لأجوبته بعد التسليم',
 'الطالب (5): صفحة «صفّي» (المدرس، الإعلانات، الاختبارات) • بطاقة الصف بالرئيسية • تنبيه 🆕 للاختبارات الجديدة • زر «زامن هسه» ووقت آخر مزامنة • تعليمات الدخول من جهاز ثاني',
 'الأمان (8): كلمات المرور والرموز مشفّرة بـ bcrypt • جلسات عشوائية 256-بت محفوظة كبصمة SHA-256 • قفل 15 دقيقة بعد 5 محاولات غلط • حدود معدّل ضد التخمين والإغراق • الجداول بمخطط خاص مقفول والوصول بس عبر دوال تتحقق من الهوية • تنظيف المدخلات بالسيرفر وتهريبها بالواجهة ضد XSS • سياسة CSP بالملف تمنع أي اتصال إلا بسيرفر المنصة • انتهاء الجلسات (30 يوم للمدرس، 180 للطالب) والرمز ما ينحفظ بملف التقدّم'],});
+</script>
+
+<style>
+.olbdg{display:inline-grid;place-items:center;min-width:1.2rem;height:1.2rem;padding:0 .3rem;border-radius:999px;background:var(--bad);color:#fff;font-size:.72rem;font-weight:800;line-height:1}
+#olPill .olbdg{margin-inline-start:.15rem}
+.hwc{border:1px solid var(--line);border-radius:14px;padding:.8rem 1rem;background:var(--surface);margin:.6rem 0}
+.hwc .meta{color:var(--dim);font-size:.85rem}
+.hwbody{white-space:pre-wrap;overflow-wrap:anywhere;margin:.4rem 0}
+.hwimg{max-width:min(100%,26rem);border-radius:10px;border:1px solid var(--line);display:block;margin:.4rem 0;cursor:zoom-in}
+.chatw{display:flex;flex-direction:column;gap:.4rem;max-height:min(60vh,34rem);overflow-y:auto;padding:.6rem;border:1px solid var(--line);border-radius:14px;background:var(--bg2)}
+.bub{max-width:80%;padding:.45rem .7rem;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem}
+.bub small{display:block;opacity:.65;font-size:.72rem;margin-top:.15rem}
+.bub.me{align-self:flex-start;background:var(--accent);color:var(--accent-ink);border-end-start-radius:4px}
+.bub.them{align-self:flex-end;background:var(--surface2);border:1px solid var(--line);border-end-end-radius:4px}
+.chatf{display:flex;gap:.5rem;margin-top:.6rem}.chatf textarea{flex:1;min-width:0;resize:none}
+.thr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center;text-align:start;width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:.6rem .8rem;margin:.35rem 0;cursor:pointer;font:inherit}
+.thr small{color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.subrow{border-top:1px solid var(--line);padding:.7rem 0}
+</style>
+<script>
+'use strict';
+/* ===== badges (unread messages / pending homework / ungraded) ===== */
+let olBg={},olBgAt=0;
+const olB=n=>n?`<span class="olbdg">${n>99?'99+':n}</span>`:'';
+async function olBadges(force){const s=olSess();if(!s)return;if(!force&&Date.now()-olBgAt<45000){olBgPaint();return}
+ try{olBg=await olRpc(s.role==='t'?'t_badges':'s_badges',{p_token:s.token});olBgAt=Date.now()}catch(e){}olBgPaint()}
+function olBgPaint(){const s=olSess();if(!s)return;const t=s.role==='t';const tot=t?(+olBg.msg||0)+(+olBg.ungraded||0):(+olBg.msg||0)+(+olBg.hw||0);
+ if(!olPill.hidden){const old=$('.olbdg',olPill);if(old)old.remove();if(tot)olPill.insertAdjacentHTML('beforeend',olB(tot))}
+ const set=(id,n)=>{const e=$('#'+id);if(e)e.innerHTML=olB(n)};set('olBHw',+olBg.hw||0);set('olBMsg',+olBg.msg||0);set('olBUng',+olBg.ungraded||0);set('olBTm',+olBg.msg||0)}
+{const _p=olPaint;olPaint=function(){_p();olBgPaint()}}
+setInterval(()=>{if(!document.hidden&&olSess())olBadges(true)},60000);
+document.addEventListener('view',()=>{if(olSess())olBadges()});
+const olDue=d=>{if(!d)return'';const ms=new Date(d)-Date.now();const late=ms<0;const days=Math.round(Math.abs(ms)/864e5);return late?`<span style="color:var(--bad)">⏰ انتهى الموعد ${olDate(d)}</span>`:`⏳ التسليم: ${olDate(d)}${days<=1?' <b style="color:var(--warn)">(قريب)</b>':''}`};
+/* compress a photo to a small JPEG so it fits the server limit */
+function olShrink(file){return new Promise((res,rej)=>{if(!/^image\/(jpeg|png|webp|heic|heif)/.test(file.type)&&!/\.(jpe?g|png|webp)$/i.test(file.name))return rej(new Error('اختار صورة (JPG أو PNG)'));
+ const fr=new FileReader();fr.onerror=()=>rej(new Error('ما گدرنا نقرا الصورة'));fr.onload=()=>{const im=new Image();im.onerror=()=>rej(new Error('صيغة الصورة مو مدعومة'));im.onload=()=>{
+  let w=im.naturalWidth,h=im.naturalHeight,max=1100,q=.65,out='';for(let k=0;k<8;k++){const sc=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);out=c.toDataURL('image/jpeg',q);if(out.length<190000)break;max=Math.round(max*.8);q=Math.max(.4,q-.07)}
+  out.length<200000?res(out):rej(new Error('الصورة كبيرة، صوّر جزء أصغر'))};im.src=fr.result};fr.readAsDataURL(file)})}
+const olSafeImg=u=>typeof u==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u)?u:'';
+
+/* ===== student: homework ===== */
+route('hw',()=>{const s=olSess();if(!s||s.role!=='s'){after(()=>go('login'));return{html:''}}
+ after(async()=>{const box=$('#hwBox');try{const L=await olRpc('s_hw_list',{p_token:s.token});if(CUR!=='hw')return;
+  box.innerHTML=L.length?L.map(h=>{const st=h.sub?(h.sub.grade!=null?`✅ مصحّح: <b>${h.sub.grade}/100</b>`:'📤 سلّمته · بانتظار التصحيح'):(h.open?'🆕 ما سلّمته بعد':'🔒 مسكّر');return`<button class="item" data-go="hw-${esc(h.id)}"><span>📚</span><span><b>${esc(h.title)}</b><br><small>${st}${h.due?' · '+olDue(h.due):''}</small></span><span>›</span></button>`}).join(''):'<div class="card"><p>ماكو واجبات من الأستاذ بعد.</p></div>'}
+ catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
+ return{html:`<div class="eyebrow">صفّي</div><h1 style="font-size:2rem;margin:.2rem 0 1rem">📚 واجباتي</h1><div id="hwBox"><p>نحمّل…</p></div>`,crumbs:[['me','صفّي'],['hw','واجباتي']]}});
+route('hw-([0-9a-f-]{36})',id=>{const s=olSess();if(!s||s.role!=='s'){after(()=>go('login'));return{html:''}}
+ after(async()=>{const box=$('#hwOne');try{const L=await olRpc('s_hw_list',{p_token:s.token});const h=L.find(x=>x.id===id);if(!h){box.innerHTML=`<div class="olmsg bad">${OLMSG.NOT_FOUND}</div>`;return}
+  const sub=h.sub,graded=sub&&sub.grade!=null,can=h.open&&!graded;let img=sub&&olSafeImg(sub.img)||'';const draftK='hwd-'+id;let draft='';try{draft=localStorage.getItem(draftK)||''}catch(e){}
+  box.innerHTML=`<h1 style="font-size:1.9rem;margin:.2rem 0">${esc(h.title)}</h1><p class="meta" style="color:var(--dim)">${olDate(h.at)}${h.due?' · '+olDue(h.due):''}</p><div class="hwc"><div class="hwbody">${esc(h.body||'')}</div></div>
+  ${graded?`<div class="olmsg ok"><b>الدرجة: ${sub.grade}/100</b>${sub.feedback?'<br>ملاحظة الأستاذ: '+esc(sub.feedback):''}</div>`:''}
+  ${sub?`<div class="hwc"><b>جوابك (${olWhen(sub.at)})</b><div class="hwbody">${esc(sub.body||'')}</div>${img?`<img class="hwimg" src="${img}" alt="صورة جوابك">`:''}</div>`:''}
+  ${can?`<div class="card"><h3>${sub?'عدّل جوابك قبل التصحيح':'سلّم جوابك'}</h3><form class="olf" id="hwF"><textarea id="hwT" class="olin" rows="6" maxlength="4000" placeholder="اكتب جوابك هنا…">${esc(sub?sub.body:draft)}</textarea>
+   <label>📷 صورة الحل (اختياري) <small>إذا حليت بالدفتر صوّره. نصغّر الصورة تلقائياً</small><input type="file" id="hwI" accept="image/*"></label><div id="hwP">${img?`<img class="hwimg" src="${img}" alt=""><button type="button" class="btn sm" id="hwX">شيل الصورة</button>`:''}</div>
+   <div id="hwM"></div><button class="btn pri" type="submit" id="hwGo">📤 ${sub?'حدّث التسليم':'سلّم للأستاذ'}</button></form></div>`:(!h.open&&!sub?'<div class="olmsg info">الأستاذ سكّر هذا الواجب.</div>':'')}<button class="btn" data-go="hw" style="margin-top:.8rem">رجوع للواجبات</button>`;
+  if(!can)return;const ta=$('#hwT');ta.oninput=()=>{try{localStorage.setItem(draftK,ta.value)}catch(e){}};
+  const bindX=()=>{const x=$('#hwX');if(x)x.onclick=()=>{img='';$('#hwP').innerHTML=''}};bindX();
+  $('#hwI').onchange=async e=>{const f=e.target.files[0];if(!f)return;$('#hwP').innerHTML='<small>نجهّز الصورة…</small>';try{img=await olShrink(f);$('#hwP').innerHTML=`<img class="hwimg" src="${img}" alt=""><small>${Math.round(img.length*.75/1024)} KB</small> <button type="button" class="btn sm" id="hwX">شيل الصورة</button>`;bindX()}catch(err){$('#hwP').innerHTML=`<div class="olmsg bad">${esc(err.message)}</div>`;img=''}};
+  $('#hwF').onsubmit=async ev=>{ev.preventDefault();const t=ta.value.trim();if(!t&&!img){$('#hwM').innerHTML='<div class="olmsg bad">اكتب جواب أو أضف صورة.</div>';return}const b=$('#hwGo');b.disabled=true;
+   try{await olRpc('s_hw_submit',{p_token:s.token,p_hw:id,p_body:t,p_img:img||null},{timeout:30000});try{localStorage.removeItem(draftK)}catch(e){}toast('✅ وصل جوابك للأستاذ');olBadges(true);render()}catch(e){$('#hwM').innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`;b.disabled=false}}}
+ catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
+ return{html:`<div class="eyebrow">واجب</div><div id="hwOne"><p>نحمّل…</p></div>`,crumbs:[['me','صفّي'],['hw','واجباتي'],['hw-'+id,'الواجب']]}});
+
+/* ===== chat (student ↔ his teacher; teacher ↔ each student) ===== */
+let chatTimer=null;
+function chatView(box,msgs,mine){const atBottom=!box.dataset.n||box.scrollHeight-box.scrollTop-box.clientHeight<60;const n=msgs.length;
+ box.innerHTML=n?msgs.map(m=>`<div class="bub ${m.t===mine?'me':'them'}">${esc(m.b)}<small>${olWhen(m.at)}${m.t===mine&&m.seen?' · ✓✓ انقرت':''}</small></div>`).join(''):'<p style="color:var(--dim);text-align:center">ماكو رسائل بعد. ابدأ المحادثة 👋</p>';
+ if(atBottom||+box.dataset.n!==n)box.scrollTop=box.scrollHeight;box.dataset.n=n}
+function chatPage(route0,load,send,mine,title){after(()=>{const w=$('#chatW'),ta=$('#chatT');let busy=false;
+ const refresh=async()=>{if(busy)return;busy=true;try{const m=await load();if(CUR===route0)chatView(w,m,mine)}catch(e){if(CUR===route0)w.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}finally{busy=false}};
+ const doSend=async()=>{const t=ta.value.trim();if(!t)return;const b=$('#chatGo');b.disabled=true;try{await send(t);ta.value='';await refresh()}catch(e){toast(e.message,4000)}finally{b.disabled=false;ta.focus()}};
+ $('#chatGo').onclick=doSend;ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend()}};
+ refresh().then(()=>olBadges(true));clearInterval(chatTimer);chatTimer=setInterval(()=>{if(CUR!==route0){clearInterval(chatTimer);return}if(!document.hidden)refresh()},8000)});
+ return`<h1 style="font-size:1.8rem;margin:.2rem 0 .8rem">💬 ${title}</h1><div class="chatw" id="chatW"><p>نحمّل…</p></div><div class="chatf"><textarea id="chatT" class="olin" rows="2" maxlength="1000" placeholder="اكتب رسالتك… (Enter للإرسال)"></textarea><button class="btn pri" id="chatGo">إرسال</button></div><p style="color:var(--dim);font-size:.82rem;margin-top:.4rem">🔒 الرسائل تنشاف بس بينك وبين ${mine?'الطالب':'أستاذك'}. التحديث كل 8 ثواني. لا تكتب كلمات سر أو معلومات خاصة.</p>`}
+route('chat',()=>{const s=olSess();if(!s||s.role!=='s'){after(()=>go('login'));return{html:''}}
+ return{html:chatPage('chat',()=>olRpc('s_msgs',{p_token:s.token}),t=>olRpc('s_send',{p_token:s.token,p_body:t}),false,'محادثة '+esc(s.teacher)),crumbs:[['me','صفّي'],['chat','المحادثة']]}});
+route('tpm',()=>{if(olNeedT())return{html:''};const s=olTS();
+ after(async()=>{const box=$('#tpmBox');try{const L=await olRpc('t_threads',{p_token:s.token});if(CUR!=='tpm')return;let q='';
+  const draw=()=>{const F=L.filter(x=>!q||x.name.includes(q)||x.section.includes(q));$('#tpmL').innerHTML=F.length?F.map(x=>`<button class="thr" data-go="tpm-${esc(x.id)}"><span><b>${esc(x.name)}</b> <span class="pill">${esc(x.section)}</span><small>${x.last?esc(x.last)+' · '+olWhen(x.last_at):'ماكو رسائل'}</small></span>${olB(+x.unread||0)}</button>`).join(''):'<p style="color:var(--dim)">ماكو طلاب.</p>'};
+  box.innerHTML=`<input class="olin" id="tpmQ" placeholder="🔍 دوّر على طالب أو شعبة" style="width:100%"><div id="tpmL"></div>`;draw();$('#tpmQ').oninput=e=>{q=e.target.value.trim();draw()}}
+ catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
+ return{html:`<div class="eyebrow">بوابة المدرس</div><h1 style="font-size:1.9rem;margin:.2rem 0 1rem">💬 المحادثات</h1><div id="tpmBox"><p>نحمّل…</p></div>`,crumbs:[['tp','بوابة المدرس'],['tpm','المحادثات']]}});
+route('tpm-([0-9a-f-]{36})',sid=>{if(olNeedT())return{html:''};const s=olTS();let nm='الطالب';
+ for(const k in OLC.dash){const r=(OLC.dash[k].rows||[]).find(x=>x.id===sid);if(r)nm=r.name}
+ return{html:chatPage('tpm-'+sid,()=>olRpc('t_msgs',{p_token:s.token,p_student:sid}),t=>olRpc('t_send',{p_token:s.token,p_student:sid,p_body:t}),true,esc(nm)),crumbs:[['tp','بوابة المدرس'],['tpm','المحادثات'],['tpm-'+sid,'محادثة']]}});
+
+/* ===== teacher: homework ===== */
+route('tph',()=>{if(olNeedT())return{html:''};const s=olTS();
+ after(async()=>{const box=$('#tphBox');try{const me=await olTme();const L=await olRpc('t_hw_list',{p_token:s.token});if(CUR!=='tph')return;const secL=id=>{const x=me.sections.find(z=>z.id===id);return x?x.label:'كل الشعب'};
+  const d=new Date(Date.now()+3*864e5);const dv=d.toISOString().slice(0,10);
+  box.innerHTML=`<div class="card"><h3>➕ واجب جديد</h3><form class="olf" id="tphF"><label>العنوان<input id="tphT" class="olin" maxlength="100" placeholder="مثل: حل أسئلة الفصل الأول ص23" required></label><label>التفاصيل<textarea id="tphB" class="olin" rows="4" maxlength="3000" placeholder="شنو المطلوب بالضبط؟ الصفحات، عدد الأسئلة، الطريقة…"></textarea></label>
+   <div class="row" style="gap:.6rem;flex-wrap:wrap"><label>لمن؟<select id="tphS" class="olin"><option value="">كل شعبي</option>${me.sections.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('')}</select></label><label>آخر موعد<input id="tphD" class="olin" type="date" value="${dv}"></label></div><div id="tphM"></div><button class="btn pri" type="submit">📤 أرسل الواجب للطلاب</button></form></div>
+  <h2 style="margin-top:1.2rem">الواجبات</h2>${L.length?L.map(h=>`<div class="hwc"><div class="row" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap"><b>${esc(h.title)}</b><span class="pill">${esc(secL(h.section))}</span></div><div class="meta">${olDate(h.at)}${h.due?' · '+olDue(h.due):''} · سلّموا <b>${h.subs}</b> من ${h.total} · صحّحت ${h.graded} · ${h.open?'🟢 مفتوح':'⚪ مسكّر'}</div>
+   <div class="row" style="gap:.4rem;flex-wrap:wrap;margin-top:.5rem"><button class="btn pri sm" data-go="tphs-${esc(h.id)}">📥 التسليمات والتصحيح ${olB(h.subs-h.graded)}</button><button class="btn sm" data-ht="${esc(h.id)}" data-o="${h.open?1:0}">${h.open?'🔒 سكّر التسليم':'🔓 افتح التسليم'}</button><button class="btn sm" data-hd="${esc(h.id)}">🗑 حذف</button></div></div>`).join(''):'<p style="color:var(--dim)">ما أرسلت واجبات بعد.</p>'}`;
+  $('#tphF').onsubmit=async ev=>{ev.preventDefault();const t=$('#tphT').value.trim();if(t.length<2)return;const dd=$('#tphD').value;const due=dd?new Date(dd+'T23:59:00').toISOString():null;
+   try{await olRpc('t_hw_create',{p_token:s.token,p_section:$('#tphS').value||null,p_title:t,p_body:$('#tphB').value,p_due:due});toast('✅ وصل الواجب للطلاب');render()}catch(e){$('#tphM').innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}};
+  $$('[data-ht]',box).forEach(b=>b.onclick=async()=>{try{await olRpc('t_hw_toggle',{p_token:s.token,p_hw:b.dataset.ht,p_open:b.dataset.o!=='1',p_delete:false});render()}catch(e){toast(e.message)}});
+  $$('[data-hd]',box).forEach(b=>olConfirm(b,'متأكد؟ تنحذف كل التسليمات',async()=>{try{await olRpc('t_hw_toggle',{p_token:s.token,p_hw:b.dataset.hd,p_open:false,p_delete:true});render()}catch(e){toast(e.message)}}))}
+ catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
+ return{html:`<div class="eyebrow">بوابة المدرس</div><h1 style="font-size:1.9rem;margin:.2rem 0 1rem">📚 الواجبات</h1><div id="tphBox"><p>نحمّل…</p></div>`,crumbs:[['tp','بوابة المدرس'],['tph','الواجبات']]}});
+route('tphs-([0-9a-f-]{36})',id=>{if(olNeedT())return{html:''};const s=olTS();
+ after(async()=>{const box=$('#tphsBox');try{const r=await olRpc('t_hw_subs',{p_token:s.token,p_hw:id});if(CUR!=='tphs-'+id)return;const St=r.students,sub=St.filter(x=>x.sub),miss=St.filter(x=>!x.sub);let f='all';
+  const draw=()=>{const L=f==='miss'?[]:sub.filter(x=>f==='all'||(f==='ung'?x.sub.grade==null:x.sub.grade!=null));
+   $('#tphsL').innerHTML=(f==='miss'?(miss.length?miss.map(x=>`<div class="subrow"><b>${esc(x.name)}</b> <span class="pill">${esc(x.section)}</span> <button class="btn sm" data-go="tpm-${esc(x.id)}">💬 ذكّره</button></div>`).join(''):'<p>الكل سلّم 👏</p>'):
+   (L.length?L.map(x=>{const im=olSafeImg(x.sub.img);return`<div class="subrow" data-sid="${esc(x.id)}"><div class="row" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap"><b>${esc(x.name)} <span class="pill">${esc(x.section)}</span></b><small style="color:var(--dim)">${olDate(x.sub.at)}${r.hw.due&&new Date(x.sub.at)>new Date(r.hw.due)?' · <span style="color:var(--bad)">متأخر</span>':''}</small></div>
+    <div class="hwbody">${esc(x.sub.body||'')}</div>${im?`<img class="hwimg" src="${im}" alt="صورة جواب ${esc(x.name)}">`:''}
+    <div class="row" style="gap:.4rem;flex-wrap:wrap;align-items:center"><input class="olin" type="number" min="0" max="100" data-g="${esc(x.id)}" value="${x.sub.grade??''}" placeholder="الدرجة /100" style="width:7.5rem"><input class="olin" data-fb="${esc(x.id)}" maxlength="1000" value="${esc(x.sub.feedback||'')}" placeholder="ملاحظة للطالب (اختياري)" style="flex:1;min-width:10rem"><button class="btn sm pri" data-sv="${esc(x.id)}">${x.sub.grade!=null?'✔ عدّل':'✔ صحّح'}</button><button class="btn sm" data-go="tpm-${esc(x.id)}">💬</button></div></div>`}).join(''):'<p style="color:var(--dim)">ماكو تسليمات هنا.</p>'));
+   $$('[data-sv]').forEach(b=>b.onclick=async()=>{const sid=b.dataset.sv,g=$(`[data-g="${sid}"]`).value;const gv=g===''?null:Math.max(0,Math.min(100,Math.round(+g)));if(gv==null)return toast('اكتب الدرجة');
+    b.disabled=true;try{await olRpc('t_hw_grade',{p_token:s.token,p_hw:id,p_student:sid,p_grade:gv,p_feedback:$(`[data-fb="${sid}"]`).value});const x=sub.find(z=>z.id===sid);x.sub.grade=gv;x.sub.feedback=$(`[data-fb="${sid}"]`).value;toast('✅ انحفظت الدرجة ووصلت للطالب');olBadges(true);draw();head()}catch(e){toast(e.message);b.disabled=false}});
+   $$('.hwimg').forEach(i=>i.onclick=()=>{const w=document.createElement('div');w.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:grid;place-items:center;padding:1rem;cursor:zoom-out';const im=document.createElement('img');im.src=i.src;im.style.cssText='max-width:100%;max-height:100%;border-radius:8px';w.appendChild(im);w.onclick=()=>w.remove();document.body.appendChild(w)})};
+  const head=()=>{const g=sub.filter(x=>x.sub.grade!=null),avg=g.length?Math.round(g.reduce((a,x)=>a+x.sub.grade,0)/g.length):null;$('#tphsK').innerHTML=`<div class="k"><b>${sub.length}/${St.length}</b><span>سلّموا</span></div><div class="k"><b>${sub.length-g.length}</b><span>بانتظار التصحيح</span></div><div class="k"><b>${miss.length}</b><span>ما سلّموا</span></div><div class="k"><b>${avg==null?'—':avg}</b><span>متوسط الدرجات</span></div>`};
+  box.innerHTML=`<h1 style="font-size:1.8rem;margin:.2rem 0">${esc(r.hw.title)}</h1><p style="color:var(--dim)">${r.hw.due?olDue(r.hw.due):''}</p><div class="hwc"><div class="hwbody">${esc(r.hw.body||'')}</div></div><div class="tpk" id="tphsK"></div>
+   <div class="oltabs">${[['all','الكل'],['ung','بانتظار التصحيح'],['gr','مصحّحة'],['miss','ما سلّموا']].map(t=>`<button data-f="${t[0]}" class="${t[0]==='all'?'on':''}">${t[1]}</button>`).join('')}<button id="tphsCsv">⬇️ الدرجات CSV</button></div><div id="tphsL"></div>`;
+  head();draw();$$('[data-f]',box).forEach(b=>b.onclick=()=>{f=b.dataset.f;$$('[data-f]',box).forEach(y=>y.classList.toggle('on',y===b));draw()});
+  $('#tphsCsv').onclick=()=>{const cell=v=>{let t=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'};olFile('درجات-'+r.hw.title.replace(/[^\p{L}\p{N} _-]/gu,'')+'.csv','﻿'+[['الطالب','الشعبة','سلّم؟','وقت التسليم','الدرجة','الملاحظة'],...St.map(x=>[x.name,x.section,x.sub?'نعم':'لا',x.sub?olDate(x.sub.at):'',x.sub&&x.sub.grade!=null?x.sub.grade:'',x.sub?x.sub.feedback||'':''])].map(l=>l.map(cell).join(',')).join('\r\n'),'text/csv;charset=utf-8')}}
+ catch(e){box.innerHTML=`<div class="olmsg bad">${esc(e.message)}</div>`}});
+ return{html:`<div class="eyebrow">تسليمات الواجب</div><div id="tphsBox"><p>نحمّل…</p></div>`,crumbs:[['tp','بوابة المدرس'],['tph','الواجبات'],['tphs-'+id,'التسليمات']]}});
+CHANGES[0].l.push('جديد: الواجبات (المدرس يرسل، الطالب يسلّم نص أو صورة الحل، المدرس يصحّح بدرجة وملاحظة) والمحادثة بين الطالب وأستاذه، مع إشعارات بالأرقام');
 </script>
 
 <script>
