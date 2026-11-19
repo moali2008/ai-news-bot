@@ -1,5 +1,5 @@
-/* offline cache for الدليل الرقمي — build 85bcb53dcd17 */
-const V='dfbook-85bcb53dcd17';
+/* offline cache for الدليل الرقمي — build 845ed50a0449 */
+const V='dfbook-845ed50a0449';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!=='dfbook-fonts').map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

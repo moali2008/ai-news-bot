@@ -11453,6 +11453,154 @@ document.addEventListener('view',e=>{if(!String(e.detail).startsWith('pres-')){i
 CHANGES.unshift({v:8,d:'2026-11-19',t:'الامتحانات النهائية، الملخص، ووضع الشرح',l:['🎓 الامتحانات النهائية: تحدد نوع الامتحان (شهري، نصف السنة، النهائي، الوزاري) وشنو داخل بيه بالضبط (فصول كاملة، دروس معيّنة، أو نص فصل)، ويطلعلك: نسبة تغطيتك، أسئلة الكتاب ضمن المنهج، امتحان تجريبي على نفس المنهج مع تحليل حسب الدرس، وخطة مذاكرة يومية لحد الموعد','📒 الملخص: لأي منهج تختاره، بترتيب الكتاب (1.1، 1.2…)، كل درس: خلاصته، الكلمات المفتاحية، مصطلحاته، والأسئلة المتوقعة مع أجوبتها، برقم الصفحة، وجاهز للطباعة','👨‍🏫 وضع الشرح للمدرس: كل درس يصير شرائح بترتيب الكتاب، نص الكتاب بخط كبير، الشرح بالعراقي بضغطة، الأنشطة التفاعلية تشتغل، أسئلة للصف بتصويت الأيدي، قلم للرسم، مؤشر ليزر، شاشة سوداء، مؤقت، اختيار طالب عشوائي، ملء الشاشة، والتنقل بالأسهم أو السحب','زر «👨‍🏫 اشرحه على السبورة» بكل درس، وعلامة ✓ للدروس اللي انشرحت']});
 </script>
 
+<style>
+/* ===== new interface: 5 tabs, a living dashboard, motion and feedback ===== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--r:18px}
+/* desktop side rail (RTL: on the right) */
+.rail{display:none}
+@media (min-width:1100px){
+ .rail{display:flex;flex-direction:column;gap:.35rem;position:fixed;top:calc(4.2rem + env(safe-area-inset-top,0px));inset-inline-start:max(12px,env(safe-area-inset-right,0px));z-index:45;width:5.6rem;padding:.5rem;border-radius:22px;background:rgba(9,22,44,.82);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+ .rail button{all:unset;cursor:pointer;display:grid;justify-items:center;gap:.15rem;padding:.6rem .2rem;border-radius:16px;color:var(--dim);font-size:.78rem;font-weight:600;transition:background .2s var(--ease),color .2s,transform .15s}
+ .rail button b{font-size:1.45rem;line-height:1;transition:transform .25s var(--ease)}
+ .rail button:hover{background:rgba(124,200,255,.08);color:var(--fg)}.rail button:hover b{transform:translateY(-2px) scale(1.08)}
+ .rail button.on{background:linear-gradient(160deg,rgba(59,140,255,.28),rgba(59,140,255,.1));color:#fff;box-shadow:inset 0 0 0 1px rgba(124,200,255,.35)}
+ main{padding-inline-start:7.2rem!important}
+ .bnav{display:none!important}
+}
+/* mobile tab bar */
+.bnav{-webkit-backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.bnav button{position:relative;transition:color .2s}.bnav button b{transition:transform .25s var(--ease)}
+.bnav button.on b{transform:translateY(-3px) scale(1.12)}
+.bnav button.on::before{content:"";position:absolute;top:0;inset-inline:28%;height:3px;border-radius:0 0 4px 4px;background:var(--accent);animation:tabIn .3s var(--ease)}
+@keyframes tabIn{from{transform:scaleX(0)}}
+/* universal feedback: lift on hover, press on tap, ripple */
+.btn,.item,.tile,.kitt,.dcard,.dfold,.hubrow,.lsn,.extype,.qopt,.chap{transition:transform .16s var(--ease),box-shadow .2s var(--ease),border-color .2s,background .2s}
+@media (hover:hover){.item:hover,.kitt:hover,.dcard:hover,.hubrow:hover,.lsn:hover,.extype:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(2,8,20,.35)}.btn:hover{transform:translateY(-1px)}}
+.btn:active,.item:active,.tile:active,.kitt:active,.dcard:active,.dfold:active,.hubrow:active,.lsn:active,.qopt:active{transform:scale(.97)}
+.rip{position:absolute;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.28);transform:scale(0);animation:rip .55s ease-out forwards}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+.stag>*{animation:rise .5s var(--ease) both;animation-delay:calc(var(--i,0)*55ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.qopt.ok{animation:okPop .4s var(--ease)}.qopt.no{animation:noShake .38s}
+@keyframes okPop{40%{transform:scale(1.03)}}@keyframes noShake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.stag>*,.qopt.ok,.qopt.no,.rip{animation:none!important}}
+/* dashboard */
+.view.dash-only>*:not(.dash){display:none!important}
+.dash{display:grid;gap:1rem}
+.dhead{position:relative;overflow:hidden;border-radius:24px;padding:1.3rem 1.4rem;background:linear-gradient(135deg,#0f2f63,#0b2148 60%,#0a1a38);border:1px solid rgba(124,200,255,.28);display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:1rem;align-items:center}
+.dhead::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(124,200,255,.05) 0 1px,transparent 1px 36px),repeating-linear-gradient(0deg,rgba(124,200,255,.05) 0 1px,transparent 1px 36px);pointer-events:none}
+.dhead .av{width:4rem;height:4rem;border-radius:16px;display:grid;place-items:center;font-size:2.2rem;background:rgba(255,255,255,.08);border:1px solid rgba(124,200,255,.35)}
+.dhead h1{margin:0;font-size:clamp(1.25rem,3vw,1.8rem);font-family:var(--f-display);line-height:1.35;background:none;-webkit-text-fill-color:currentColor;color:#fff}
+.dhead .sub{color:#bcd3f2;font-size:.92rem}.dhead .drk{color:#f5c518;font-weight:700}
+.dhead .xp{height:.45rem;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:.45rem;max-width:26rem}.dhead .xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3b8cff,#7cc8ff);transition:width 1.2s var(--ease)}
+.dhead .stamp{border:2px solid #f5c518;color:#f5c518;border-radius:10px;padding:.2rem .6rem;font-weight:800;font-size:.8rem;transform:rotate(-8deg);text-align:center;line-height:1.3}
+.dhead .stamp b{display:block;font-size:1.4rem;font-family:var(--f-mono)}
+.dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:1rem}
+.dcard{position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);padding:1.1rem 1.2rem;cursor:pointer;text-align:start;font:inherit;color:var(--fg);display:grid;gap:.4rem;align-content:start}
+.dcard .k{font-size:.78rem;letter-spacing:.03em;color:var(--dim);display:flex;gap:.4rem;align-items:center}
+.dcard h3{margin:0;font-size:1.15rem;font-family:var(--f-display)}
+.dcard .go{margin-top:.4rem;justify-self:start}
+.c-6{grid-column:span 6}.c-4{grid-column:span 4}.c-8{grid-column:span 8}.c-12{grid-column:span 12}
+@media (max-width:860px){.c-6,.c-4,.c-8{grid-column:span 12}}
+.dcont{background:linear-gradient(135deg,rgba(59,140,255,.18),rgba(16,36,68,.6));border-color:rgba(124,200,255,.35)}
+.dcont .row2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1rem;align-items:center}
+.ring2{--p:0;width:4.6rem;height:4.6rem;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--rc,#3b8cff) calc(var(--p)*1%),rgba(255,255,255,.08) 0);transition:--p 1s}
+.ring2>span{width:3.7rem;height:3.7rem;border-radius:50%;display:grid;place-items:center;background:#0c1f3f;font-family:var(--f-mono);font-weight:700;font-size:.95rem;white-space:nowrap}
+.dmiss{display:grid;gap:.5rem}
+.mrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.7rem;align-items:center;padding:.55rem .7rem;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);cursor:pointer;color:var(--fg);font:inherit;text-align:start}
+.mrow.done{opacity:.6}.mrow .ck{width:1.6rem;height:1.6rem;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);font-size:.85rem}.mrow.done .ck{background:var(--ok);border-color:var(--ok);color:#04130c}
+.dfolds{display:grid;grid-template-columns:repeat(auto-fill,minmax(13.5rem,1fr));gap:1rem}
+.dfold{position:relative;cursor:pointer;text-align:start;font:inherit;color:#1d2a3f;border:0;padding:1.6rem 1rem 1rem;border-radius:4px 14px 14px 14px;background:linear-gradient(180deg,#e9d8b4,#dcc597);box-shadow:0 10px 24px rgba(0,0,0,.35);display:grid;gap:.35rem;min-height:9.5rem}
+.dfold::before{content:"";position:absolute;top:-.85rem;inset-inline-start:0;width:45%;height:1rem;border-radius:10px 10px 0 0;background:#e9d8b4}
+.dfold .no{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;color:#6b5428}
+.dfold b{font-family:var(--f-display);font-size:1.05rem;line-height:1.4}
+.dfold small{color:#5a4a2c}
+.dfold .bar3{height:.4rem;border-radius:9px;background:rgba(0,0,0,.12);overflow:hidden;margin-top:auto}.dfold .bar3 i{display:block;height:100%;background:#0d2a57;width:var(--w)}
+.dfold .st{position:absolute;inset-inline-end:.7rem;top:.6rem;transform:rotate(-12deg);border:2px solid #0f7a50;color:#0f7a50;border-radius:6px;padding:0 .35rem;font-size:.7rem;font-weight:800}
+.dfold .st.open{border-color:#b3261e;color:#b3261e}
+@media (hover:hover){.dfold:hover{transform:translateY(-4px) rotate(-.6deg);box-shadow:0 18px 34px rgba(0,0,0,.45)}}
+.dquick{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.7rem}
+.dq{display:grid;justify-items:center;gap:.3rem;padding:.9rem .5rem;border-radius:16px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font:inherit;color:var(--fg);text-align:center}
+.dq b{font-size:1.6rem;line-height:1}.dq span{font-size:.85rem;font-weight:600}
+.dsec{display:flex;justify-content:space-between;align-items:baseline;margin:.6rem 0 -.2rem}.dsec h2{margin:0;font-size:1.25rem;font-family:var(--f-display)}
+/* hub pages */
+.hub h1{font-size:clamp(1.7rem,4vw,2.3rem);margin:.2rem 0 .3rem;background:none;-webkit-text-fill-color:currentColor;color:#f1f6fc}
+.hubg{display:grid;gap:1.2rem;margin-top:1rem}
+.hubg h2{font-size:1.05rem;color:var(--dim);margin:0 0 .5rem;font-weight:700;letter-spacing:.02em}
+.hubl{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:.6rem}
+.hubrow{display:grid;grid-template-columns:2.8rem minmax(0,1fr) auto;gap:.75rem;align-items:center;text-align:start;font:inherit;color:var(--fg);padding:.7rem .85rem;border-radius:16px;border:1px solid var(--line);background:var(--surface);cursor:pointer;position:relative;overflow:hidden}
+.hubrow .ic{width:2.8rem;height:2.8rem;border-radius:12px;display:grid;place-items:center;font-size:1.35rem;background:rgba(124,200,255,.1)}
+.hubrow b{display:block;font-size:.98rem}.hubrow small{display:block;color:var(--dim);font-size:.8rem;line-height:1.5}.hubrow .ch{color:var(--dim);font-size:1.1rem}
+.hubrow.big{grid-column:1/-1;background:linear-gradient(135deg,rgba(59,140,255,.18),var(--surface));border-color:rgba(124,200,255,.35)}
+html.paper .dhead,html.paper .rail{filter:none}
+</style>
+<script>
+'use strict';
+/* tabs */
+const TABS=[['home','📖','ادرس'],['tab-train','🎯','تدرّب'],['exams','🎓','امتحانات'],['tab-tools','🧰','أدوات'],['tab-me','🕵️','أنا']];
+function tabOf(r){r=r||'home';
+ if(/^(tab-train|study|dcase|intr|tfb|cq|cqr|rexam-|mycards|en2ar|whch|spell|feyn|whys|figq|five|one|cmp2|mine|bkq|bkw|goals|cram|s-quiz|q-\d|s-cards|c-\d|s-games|g-\d|duel|speed|daily|rv|def-|rq-|match-|night-|mist|bq-|case|qp|qpr-|rev3|pc-|mx-|qa|pgqz)/.test(r))return'tab-train';
+ if(/^(exams|exam-|exq-|exbk-|exlist-|sumx-|q-final|examab|s-print|p-\d|weekc)/.test(r))return'exams';
+ if(/^(tab-tools|kit|tools|lab-|hashlab|exif|hexv|gloss|mm-|tools-read|road|voice|proj-)/.test(r))return'tab-tools';
+ if(/^(tab-me|office|progress|prefs|s-certs|cert|stats|myrep|notes|marks|new|recent|plan|week|rights|help|feedback|share|find)/.test(r))return'tab-me';
+ return'home'}
+(function(){const n=$('.bnav');if(n){n.innerHTML=TABS.map(t=>`<button data-go="${t[0]}" data-bn="${t[0]}"><b>${t[1]}</b>${t[2]}</button>`).join('')}
+ const r=document.createElement('nav');r.className='rail noprint';r.setAttribute('aria-label','الأقسام الرئيسية');r.innerHTML=TABS.map(t=>`<button data-go="${t[0]}" data-rt="${t[0]}"><b>${t[1]}</b>${t[2]}</button>`).join('')+`<button data-go="find" style="margin-top:.4rem"><b>🔍</b>بحث</button>`;document.body.appendChild(r)})();
+document.addEventListener('view',e=>{const t=tabOf(e.detail);$$('[data-bn]').forEach(b=>b.classList.toggle('on',b.dataset.bn===t));$$('[data-rt]').forEach(b=>b.classList.toggle('on',b.dataset.rt===t));const r=$('.rail');if(r)r.hidden=/^(g|lab|proj|pres)-/.test(e.detail)});
+/* ripple + haptics */
+document.addEventListener('pointerdown',e=>{if(document.documentElement.classList.contains('nomo'))return;const b=e.target.closest('.btn,.item,.tile,.kitt,.dcard,.hubrow,.dq,.mrow,.lsn');if(!b)return;const cs=getComputedStyle(b);if(cs.position==='static')b.style.position='relative';if(cs.overflow!=='hidden')b.style.overflow='hidden';const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height)*2;const d=document.createElement('span');d.className='rip';d.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;b.appendChild(d);setTimeout(()=>d.remove(),600)},{passive:true});
+(function(){const buzz=p=>{try{if(!dxOpt('nobuzz')&&navigator.vibrate)navigator.vibrate(p)}catch(e){}};if(window.SFX){const ok=SFX.ok,bad=SFX.bad,win=SFX.win;SFX.ok=function(){buzz(12);return ok&&ok.apply(this,arguments)};SFX.bad=function(){buzz([25,40,25]);return bad&&bad.apply(this,arguments)};if(win)SFX.win=function(){buzz([20,30,20,30,60]);return win.apply(this,arguments)}}})();
+/* stagger the cards of any list as it appears */
+document.addEventListener('view',()=>{requestAnimationFrame(()=>{$$('.view .list,.view .kitg,.view .hubl,.view .dfolds,.view .dquick,.view .exg,.view .tl-grid').forEach(l=>{l.classList.add('stag');[...l.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,14)))})})});
+/* count-up numbers and rings on the dashboard */
+function dAnim(){$$('[data-cnt]').forEach(el=>{const to=+el.dataset.cnt;const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/900);el.textContent=Math.round(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)});
+ $$('[data-ring]').forEach(el=>{const to=+el.dataset.ring;const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/1000);el.style.setProperty('--p',(to*(1-Math.pow(1-k,3))).toFixed(1));if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)});
+ $$('.dhead .xp i').forEach(i=>requestAnimationFrame(()=>i.style.width=i.dataset.w+'%'))}
+/* ===== the living dashboard (tab «ادرس») ===== */
+function dLast(){const l=ST.last;if(l&&/^(l|x)-\d-\d+$/.test(l))return l;const nl=typeof sNextLesson==='function'?sNextLesson():null;return nl?'l-'+nl[0]+'-'+(nl[1]+1):null}
+route('home',()=>{const r=rankOf(xp()),last=dLast(),dn=dayN();const ex=(ST.dx.exs||[]).filter(e=>e.date&&sDays(e.date)>=0).sort((a,b)=>a.date<b.date?-1:1)[0];
+ let lastTitle='',lastCh=1,lastNo='';if(last){const m=last.split('-');lastCh=+m[1];const c=BOOK.ch[m[1]];const o=m[0]==='l'?c.lessons[m[2]-1]:c.exercises[m[2]-1];lastTitle=o?(m[0]==='x'?'تمرين '+(o.num||m[2])+': ':'')+o.title:'';lastNo=m[0]==='l'?m[1]+'.'+m[2]:'تمرين'}
+ const g=sGoal(),q=sToday(),due=typeof dueCards==='function'?dueCards().length:0,dc=(ST.dx.dc||{})[dn];
+ const M=[['dcase','📁','قضية اليوم',dc!=null?(dc?'انحلّت ✓':'انحلّت غلط — ارجع باچر'):'سؤال بقصة',dc!=null],['one','🎯','هدف اليوم: '+q+' / '+g+' سؤال',q>=g?'خلّصت الهدف 👏':'باقي '+(g-q)+' سؤال',q>=g],['rv','🔁','مراجعة البطاقات',due?due+' بطاقة مستحقة':'ماكو مستحق اليوم',!due]];
+ const closed=readyN().filter(n=>chProg(n)>=100).length;
+ after(()=>{$('.view').classList.add('dash-only');dAnim()});
+ return{html:`<div class="dash">
+ <section class="dhead"><div class="av">${esc(ST.av||'🕵️')}</div><div style="position:relative;z-index:1;min-width:0"><h1>${dxHour()}${ST.name&&!ST.dx.priv?'، '+esc(ST.name.split(' ')[0]):''} 🫡</h1><div class="sub"><span class="drk">${esc(r.name)}</span> · ${r.next?'باقي '+r.need+' نقطة للترقية':'أعلى رتبة 👑'} · ${typeof streak==='function'?'🔥 '+streak()+' يوم':''}</div><div class="xp"><i data-w="${r.pc}"></i></div></div><div class="stamp" style="position:relative;z-index:1">قضايا مغلقة<b>${closed}/${readyN().length}</b></div></section>
+ <div class="dgrid">
+  <button class="dcard dcont c-8" data-go="${last||'l-1-1'}"><span class="k">▶ ${last?'كمّل من حيث وقفت':'ابدأ أول درس'}</span><div class="row2"><div class="ring2" data-ring="${chProg(lastCh)}" style="--p:0"><span>${chProg(lastCh)}%</span></div><div style="min-width:0"><h3>${last?esc(lastNo+' '+lastTitle):'1.1 تعريف التحقيق الجنائي الرقمي'}</h3><small style="color:var(--dim)">الفصل ${lastCh}: ${esc(BOOK.ch[lastCh].t)}</small></div></div><span class="btn pri sm go">${last?'كمّل ←':'ابدأ ←'}</span></button>
+  <div class="dcard c-4" style="cursor:default"><span class="k">📊 الكتاب كله</span><div class="row" style="gap:1rem;align-items:center"><div class="ring2" data-ring="${bookProg()}" style="--p:0;--rc:#f5c518"><span><b data-cnt="${bookProg()}">0</b>%</span></div><div><div><b data-cnt="${Object.keys(ST.done).length}">0</b> إنجاز</div><div style="color:var(--dim);font-size:.85rem">${Math.round((ST.mins||0)/60*10)/10} ساعة دراسة</div></div></div></div>
+  <div class="dcard c-6" style="cursor:default"><span class="k">🗓️ مهمة اليوم</span><div class="dmiss">${M.map(m=>`<button class="mrow ${m[4]?'done':''}" data-go="${m[0]}"><span class="ck">${m[4]?'✓':m[1]}</span><span><b>${m[2]}</b><small style="display:block;color:var(--dim)">${m[3]}</small></span><span>‹</span></button>`).join('')}</div></div>
+  ${ex?`<button class="dcard c-6" data-go="exam-${ex.id}"><span class="k">⏳ امتحانك الجاي</span><h3>${esc(ex.name)}</h3><div class="row" style="gap:1rem;align-items:center"><div class="ring2" data-ring="${exCover(ex.sc)}" style="--p:0;--rc:#34d399"><span>${exCover(ex.sc)}%</span></div><div><div style="font-size:2rem;font-weight:800;font-family:var(--f-mono);color:var(--ev);line-height:1">${sDays(ex.date)}</div><small style="color:var(--dim)">يوم باقي · درست ${exCover(ex.sc)}% من منهجه</small></div></div><span class="btn sm go">📒 الملخص والتجريبي ←</span></button>`
+  :`<button class="dcard c-6" data-go="exams"><span class="k">🎓 الامتحانات</span><h3>عندك امتحان قريب؟</h3><p style="margin:0;color:var(--dim)">حدّد شنو داخل بيه (فصل، دروس، نص فصل)، ونسويلك ملخص وامتحان تجريبي وخطة يومية.</p><span class="btn pri sm go">➕ أضف امتحانك</span></button>`}
+ </div>
+ <div class="dsec"><h2>📁 ملفات القضايا</h2><a href="#explain" style="font-size:.88rem">👨‍🏫 وضع الشرح</a></div>
+ <div class="dfolds">${CHMETA.map(m=>{const c=BOOK.ch[m.n];const p=chProg(m.n);return`<button class="dfold" data-go="ch-${m.n}" ${c.ready?'':'disabled'}><span class="no">CASE FILE · 0${m.n}</span><b>${esc(m.t)}</b><small>${c.ready?c.lessons.length+' درس · '+c.exercises.length+' تمرين · ص'+rg(m.p):'قريباً'}</small><span class="st ${p>=100?'':'open'}">${p>=100?'مغلقة':'مفتوحة'}</span><span class="bar3" style="--w:${p}%"><i></i></span><small style="font-family:var(--f-mono)">${p}%</small></button>`}).join('')}</div>
+ <div class="dsec"><h2>⚡ وصول سريع</h2></div>
+ <div class="dquick">${[['summary','📒','الملخص'],['exams','🎓','امتحاناتي'],['study','🎯','غرفة التدريب'],['kit','🧰','الأدوات الجنائية'],['explain','👨‍🏫','وضع الشرح'],['office','🗂️','مكتب المحقق']].map(x=>`<button class="dq" data-go="${x[0]}"><b>${x[1]}</b><span>${x[2]}</span></button>`).join('')}</div>
+ <details class="card" style="margin-top:.4rem"><summary style="cursor:pointer">ℹ️ عن المنصة والإعداد</summary><div style="margin-top:.6rem">${typeof authorCard==='function'?authorCard():''}</div></details>
+ </div>`,crumbs:[]}});
+/* ===== hub pages for the other tabs ===== */
+function hub(title,sub,groups){return`<div class="hub"><div class="eyebrow">${sub}</div><h1>${title}</h1><div class="hubg">${groups.map(g=>`<section><h2>${g[0]}</h2><div class="hubl">${g[1].map(x=>`<button class="hubrow ${x[4]?'big':''}" data-go="${x[0]}"><span class="ic">${x[1]}</span><span><b>${x[2]}</b><small>${x[3]||''}</small></span><span class="ch">‹</span></button>`).join('')}</div></section>`).join('')}</div></div>`}
+route('tab-train',()=>{const R=readyN();return{html:hub('🎯 تدرّب','اختبر نفسك بطرق مختلفة',[
+ ['ابدأ من هنا',[['study','📚','غرفة التدريب','23 طريقة: الاستجواب، صح أو خطأ خاطف، فاينمان…',1]]],
+ ['اختبارات الفصول',R.map(n=>['q-'+n,'📝','اختبار الفصل '+n,BOOK.ch[n].bank.length+' سؤال من نص الكتاب'])],
+ ['ألعاب ومنافسة',[['s-games','🎮','ألعاب الفصول','لعبة محقق ثلاثية الأبعاد لكل فصل'],['duel','⚔️','تحدّي زميل','نفس الأسئلة ونقارن'],['speed','⏱️','سباق السرعة','أكثر أجوبة بوقت قصير'],['dcase','📁','قضية اليوم','سؤال بقصة كل يوم'],['intr','🗣️','الاستجواب','3 أرواح']]],
+ ['حفظ ومراجعة',[['s-cards','🃏','بطاقات المصطلحات','وجه وظهر لكل فصل'],['rv','🔁','المراجعة المتباعدة','البطاقات المستحقة اليوم'],['mist','📕','دفتر أخطائي','كل سؤال غلطت بيه'],['mycards','✍️','بطاقاتي الخاصة','سوّي بطاقاتك'],['goals','🎯','أهدافي ونشاطي','هدف يومي وخريطة نشاط']]]]),crumbs:[['tab-train','تدرّب']]}});
+route('tab-tools',()=>{const R=readyN();return{html:hub('🧰 أدوات','أدوات المحقق والمختبرات',[
+ ['الأقوى',[['kit','🧰','حقيبة الأدوات الجنائية','25 أداة تشتغل بدون نت: سجلات، روابط، IP، Hash…',1]]],
+ ['مختبرات القضايا',R.map(n=>['lab-'+n,'🔬','مختبر الفصل '+n,'قضية بأدلة حقيقية الشكل'])],
+ ['أدوات التحليل',[['hashlab','#️⃣','مختبر التجزئة','MD5 و SHA-256 حقيقي'],['hexv','🧬','عارض Hex','تواقيع الملفات'],['exif','📷','قارئ EXIF','بيانات الصور']]],
+ ['للدراسة',[['gloss','🔤','القاموس','كل مصطلحات الكتاب'],['mm-1','🧠','الخرائط الذهنية','لكل فصل'],['voice','🔊','الشرح الصوتي','اسمع الدرس'],['tools','🛠️','كل أدوات المنصة','المؤقت، الخطة، القراءة المريحة…']]]]),crumbs:[['tab-tools','أدوات']]}});
+route('tab-me',()=>{const r=rankOf(xp());return{html:hub('🕵️ أنا','ملفك كمحقق · '+esc(r.name),[
+ ['هويتي',[['office','🗂️','مكتب المحقق','بطاقة الهوية، الرتبة، سجل الخدمة، الأوسمة',1]]],
+ ['تقدّمي',[['progress','📊','تقدّمي','كل فصل ودرس'],['stats','📈','إحصائياتي','دقتك ووقتك'],['s-certs','🏅','الشهادات','شهادة لكل فصل ونهائية'],['myrep','🧾','تقريري','للطباعة']]],
+ ['ملاحظاتي',[['notes','📝','ملاحظاتي وتظليلاتي',''],['marks','⭐','المفضلة',''],['recent','🕘','آخر الصفحات','']]],
+ ['الإعدادات',[['prefs','⚙️','الإعدادات','الاسم، النسخة الاحتياطية، الألوان، الوضع الفاتح'],['new','🆕','ما الجديد','كل الإضافات'],['help','❓','المساعدة','']]]]),crumbs:[['tab-me','أنا']]}});
+/* palette entries for the new hubs */
+if(typeof dxCmds==='function'){const _c=dxCmds;window.dxCmds=dxCmds=function(){return[['tab-train','🎯','تدرّب'],['tab-tools','🧰','أدوات'],['tab-me','🕵️','أنا'],['exams','🎓','الامتحانات النهائية'],['summary','📒','الملخص'],['explain','👨‍🏫','وضع الشرح']].concat(_c())}}
+CHANGES[0].l.unshift('✨ واجهة جديدة: خمس تبويبات (ادرس، تدرّب، امتحانات، أدوات، أنا)، رئيسية حيّة (كمّل من وين وقفت، مهمة اليوم، امتحانك الجاي، ملفات القضايا)، حركات ناعمة، تموّج عند الضغط، واهتزاز خفيف للجواب الصح والغلط على الأندرويد');
+</script>
+
 <script>
 'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
