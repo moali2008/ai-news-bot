@@ -1,0 +1,51 @@
++ git clone --depth 1 https://github.com/VAST-AI-Research/TripoSR.git tsr
+Cloning into 'tsr'...
++ cd tsr
++ pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
++ tail -5
++ pip install --quiet omegaconf==2.3.0 Pillow einops transformers==4.35.0 trimesh 'rembg[cpu]' huggingface-hub 'imageio[ffmpeg]' xatlas moderngl PyMCubes onnxruntime
++ pip install --quiet git+https://github.com/tatsy/torchmcubes.git
++ tail -3
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
++ python -c 'import torchmcubes'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'torchmcubes'
++ sed -i 's/from torchmcubes import marching_cubes/import mcubes\nimport torch\ndef marching_cubes(v,t):\n    a,b=mcubes.marching_cubes(v.detach().cpu().numpy(),t)\n    return torch.from_numpy(a.astype("float32")),torch.from_numpy(b.astype("int64"))/' tsr/models/isosurface.py
++ python run.py ../in/front.png --output-dir ../out --mc-resolution 320 --foreground-ratio 0.88 --model-save-format obj
++ tail -20
+Downloading model.ckpt:   0%|          | 0.00/1.68G [00:00<?, ?B/s]Downloading model.ckpt:   2%|▏         | 31.5M/1.68G [00:00<00:06, 269MB/s]Downloading model.ckpt:   4%|▍         | 73.4M/1.68G [00:00<00:05, 316MB/s]Downloading model.ckpt:   7%|▋         | 115M/1.68G [00:00<00:04, 348MB/s] Downloading model.ckpt:   9%|▉         | 157M/1.68G [00:00<00:04, 366MB/s]Downloading model.ckpt:  13%|█▎        | 210M/1.68G [00:00<00:03, 405MB/s]Downloading model.ckpt:  16%|█▌        | 262M/1.68G [00:00<00:03, 414MB/s]Downloading model.ckpt:  18%|█▊        | 304M/1.68G [00:00<00:03, 368MB/s]Downloading model.ckpt:  22%|██▏       | 367M/1.68G [00:00<00:03, 421MB/s]Downloading model.ckpt:  25%|██▌       | 419M/1.68G [00:01<00:02, 437MB/s]Downloading model.ckpt:  28%|██▊       | 472M/1.68G [00:01<00:02, 453MB/s]Downloading model.ckpt:  31%|███▏      | 524M/1.68G [00:01<00:02, 467MB/s]Downloading model.ckpt:  34%|███▍      | 577M/1.68G [00:01<00:02, 477MB/s]Downloading model.ckpt:  38%|███▊      | 640M/1.68G [00:01<00:02, 495MB/s]Downloading model.ckpt:  42%|████▏     | 703M/1.68G [00:01<00:01, 512MB/s]Downloading model.ckpt:  46%|████▌     | 765M/1.68G [00:01<00:01, 527MB/s]Downloading model.ckpt:  49%|████▉     | 828M/1.68G [00:01<00:01, 519MB/s]Downloading model.ckpt:  53%|█████▎    | 881M/1.68G [00:01<00:01, 510MB/s]Downloading model.ckpt:  56%|█████▋    | 944M/1.68G [00:02<00:01, 528MB/s]Downloading model.ckpt:  60%|██████    | 1.01G/1.68G [00:02<00:01, 541MB/s]Downloading model.ckpt:  64%|██████▍   | 1.07G/1.68G [00:02<00:01, 553MB/s]Downloading model.ckpt:  68%|██████▊   | 1.13G/1.68G [00:02<00:00, 561MB/s]Downloading model.ckpt:  71%|███████▏  | 1.20G/1.68G [00:02<00:00, 568MB/s]Downloading model.ckpt:  75%|███████▌  | 1.26G/1.68G [00:02<00:00, 573MB/s]Downloading model.ckpt:  79%|███████▉  | 1.32G/1.68G [00:02<00:00, 556MB/s]Downloading model.ckpt:  83%|████████▎ | 1.38G/1.68G [00:02<00:00, 413MB/s]Downloading model.ckpt:  86%|████████▌ | 1.44G/1.68G [00:03<00:00, 357MB/s]Downloading model.ckpt:  89%|████████▉ | 1.50G/1.68G [00:03<00:00, 401MB/s]Downloading model.ckpt:  93%|█████████▎| 1.55G/1.68G [00:03<00:00, 408MB/s]Downloading model.ckpt:  96%|█████████▋| 1.61G/1.68G [00:03<00:00, 450MB/s]Downloading model.ckpt:  99%|█████████▉| 1.67G/1.68G [00:03<00:00, 411MB/s]Downloading model.ckpt: 100%|██████████| 1.68G/1.68G [00:03<00:00, 455MB/s]
+/opt/hostedtoolcache/Python/3.10.22/x64/lib/python3.10/site-packages/transformers/utils/generic.py:441: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+The cache for model files in Transformers v4.22.0 has been updated. Migrating your old cache. This is a one-time only operation. You can interrupt this and resume the migration later on by calling `transformers.utils.move_cache()`.
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+/opt/hostedtoolcache/Python/3.10.22/x64/lib/python3.10/site-packages/transformers/utils/generic.py:309: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+Downloading config.json:   0%|          | 0.00/454 [00:00<?, ?B/s]Downloading config.json: 100%|██████████| 454/454 [00:00<00:00, 2.84MB/s]
+2026-11-19 22:22:45,882 - INFO - Initializing model finished in 7130.80ms.
+2026-11-19 22:22:45,882 - INFO - Processing images ...
+Downloading data from 'https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx' to file '/home/runner/.u2net/u2net.onnx'.
+  0%|                                               | 0.00/176M [00:00<?, ?B/s]  2%|▋                                     | 3.22M/176M [00:00<00:05, 32.1MB/s]  6%|██▎                                   | 10.5M/176M [00:00<00:03, 49.7MB/s] 12%|████▌                                 | 21.0M/176M [00:00<00:02, 69.7MB/s] 21%|████████▏                              | 36.8M/176M [00:00<00:01, 102MB/s] 27%|██████████▍                            | 47.3M/176M [00:00<00:01, 102MB/s] 36%|██████████████                         | 63.3M/176M [00:00<00:00, 121MB/s] 43%|████████████████▉                      | 76.2M/176M [00:00<00:00, 124MB/s] 50%|███████████████████▋                   | 88.7M/176M [00:00<00:00, 121MB/s] 59%|███████████████████████▌                | 104M/176M [00:00<00:00, 130MB/s] 68%|███████████████████████████▏            | 120M/176M [00:01<00:00, 139MB/s] 77%|██████████████████████████████▊         | 136M/176M [00:01<00:00, 145MB/s] 86%|██████████████████████████████████▍     | 152M/176M [00:01<00:00, 149MB/s] 95%|██████████████████████████████████████  | 167M/176M [00:01<00:00, 152MB/s]  0%|                                               | 0.00/176M [00:00<?, ?B/s]100%|████████████████████████████████████████| 176M/176M [00:00<00:00, 944GB/s]
+2026-11-19 22:22:48,867 - INFO - Processing images finished in 2984.17ms.
+2026-11-19 22:22:48,867 - INFO - Running image 1/1 ...
+2026-11-19 22:22:48,867 - INFO - Running model ...
+2026-11-19 22:22:58,842 - INFO - Running model finished in 9975.37ms.
+2026-11-19 22:22:58,842 - INFO - Extracting mesh ...
+2026-11-19 22:23:31,109 - INFO - Extracting mesh finished in 32266.93ms.
+2026-11-19 22:23:31,109 - INFO - Exporting mesh ...
+2026-11-19 22:23:31,227 - INFO - Exporting mesh finished in 117.46ms.
++ ls -la ../out ../out/0
+../out:
+total 12
+drwxr-xr-x 3 runner runner 4096 Nov 19 22:22 .
+drwxr-xr-x 8 runner runner 4096 Nov 19 22:22 ..
+drwxr-xr-x 2 runner runner 4096 Nov 19 22:23 0
+
+../out/0:
+total 3808
+drwxr-xr-x 2 runner runner    4096 Nov 19 22:23 .
+drwxr-xr-x 3 runner runner    4096 Nov 19 22:22 ..
+-rw-r--r-- 1 runner runner  302794 Nov 19 22:22 input.png
+-rw-r--r-- 1 runner runner 3586164 Nov 19 22:23 mesh.obj
