@@ -12215,7 +12215,7 @@ document.addEventListener('view',e=>{const r=e.detail||'home';
   if(!proFirst&&h&&(!document.activeElement||document.activeElement===document.body||document.activeElement.closest('.bnav,.rail'))){h.setAttribute('tabindex','-1');h.focus({preventScroll:true})}
   proFirst=false;
   if(/^(l|x)-\d-\d+$/.test(r))proLesson(r);
-  if(r==='home'){const s=$('.dhead .sub');if(s&&!$('.dmeta',s.parentNode)){const hj=hijri();s.insertAdjacentHTML('afterend',`<div class="dmeta">${hj?'<span>🗓️ '+esc(hj)+'</span>':''}<span>⏱️ درست اليوم ${minsOn(proDay())} دقيقة</span></div>`)}}
+  if(r==='home'){const s=$('.dhead .sub');if(s&&!$('.dmeta',s.parentNode)){const hj=hijri();s.insertAdjacentHTML('afterend',`<div class="dmeta"><span>📅 ${esc(new Date().toLocaleDateString('ar-IQ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))} م</span>${hj?'<span>🌙 '+esc(hj)+'</span>':''}<span>⏱️ درست اليوم ${minsOn(proDay())} دقيقة</span></div>`)}}
   if(r==='tab-me'&&!$('#wkCard')&&v){v.insertAdjacentHTML('beforeend',weekCard());requestAnimationFrame(()=>$$('#wkCard i').forEach(i=>i.style.height=Math.max(3,+i.dataset.h)+'px'))}
   if(r==='prefs'&&v&&!$('#proPref')){const o=ST.dx.o||{};v.insertAdjacentHTML('beforeend',`<div class="card" id="proPref" style="margin-top:1rem"><h3>🌙 تلقائي</h3><label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" id="pAW" ${o.autowarm?'checked':''}> شغّل فلتر الضوء الدافئ تلقائياً بالليل (9 بالليل – 5 الصبح)</label><label style="display:flex;gap:.5rem;align-items:center;margin-top:.4rem"><input type="checkbox" id="pBz" ${o.nobuzz?'':'checked'}> اهتزاز خفيف بالموبايل</label><button class="btn sm" style="margin-top:.6rem" id="pKb">⌨️ اختصارات لوحة المفاتيح</button></div>`);
    $('#pAW').onchange=e=>{ST.dx.o=ST.dx.o||{};ST.dx.o.autowarm=e.target.checked;save();autoWarm()};$('#pBz').onchange=e=>{ST.dx.o=ST.dx.o||{};ST.dx.o.nobuzz=!e.target.checked;save()};$('#pKb').onclick=kbHelp}});
@@ -12237,6 +12237,79 @@ CHANGES.unshift({v:9,d:'2026-11-19',t:'شاشة الترحيب، راديو ال
 '🌫️ الدروس اللي مو ضمن امتحانك تطلع باهتة بالخريطة','🔵 شريط تسلسل الدروس لكل فصل','🖼️ أيقونة لكل درس حسب موضوعه','💡 «الفكرة بسطر» لكل درس','🧭 مخطط خطوات الدرس من عناوينه','🔢 أهم النقاط مرقّمة بدوائر ملوّنة','✨ عبارات الكتاب المهمة كشارات','🔤 المصطلحات كبطاقات عربي وإنكليزي','🧠 «تذكّر» بجملة وحدة لكل درس','❓ أسئلة متوقعة تكشف جوابها بضغطة',
 '🙈 خيار «بدون الخرائط» بالملخص','🧾 فهرس سريع للفصول أعلى الملخص','🖨️ الملخص المصوّر مرتّب للطباعة A4','➕ +10 XP يطير من مكان ضغطتك على الجواب الصح','🔥 عدّاد «3 صح ورا بعض» و5 و10','🎯 احتفال لمن تخلص هدف اليوم','1️⃣ أرقام 1–4 تجاوب على الأسئلة من الكيبورد','📴 تنبيه لمن ينقطع النت أو يرجع','📏 شريط تقدّم القراءة أعلى الدرس','🗺️ الخريطة الذهنية تتوسّط تلقائياً بالموبايل مع تلميح «اسحب»',
 '🔗 زر «شارك الدرس» (أو ينسخ الرابط)','🖼️ صور الصفحات تنزل بس لمن توصلها، فالتنقل أسرع','↩️ «كمّل من وين وقفت» يرجعك لنفس مكانك بالدرس','🗓️ التاريخ الهجري بالرئيسية','⏱️ «درست اليوم X دقيقة» بالرئيسية (يحسب بس وانت متفاعل)','📊 رسم وقت الدراسة لهذا الأسبوع بصفحة «أنا»','🌙 فلتر الضوء الدافئ يشتغل تلقائياً بالليل (اختياري)','⌨️ Alt+1…6 للتنقل بين التبويبات','♿ زر «تخطَّ إلى المحتوى» وحلقات تركيز واضحة للكيبورد','🏷️ عنوان المتصفح يتغير حسب الصفحة، والتبويب الحالي معلّم لقارئ الشاشة']});
+</script>
+
+<style>
+/* ===== the sections live in a ☰ menu: no bar covering the page ===== */
+.bnav,.rail{display:none!important}
+@media (min-width:1100px){main{padding-inline:clamp(1.3rem,3.4vw,2.6rem)!important}}
+body.hasbnav main,body.hasbnav #main{padding-bottom:1.5rem!important}
+.rdmini,.netp,.rsm,#pomo{bottom:calc(1.1rem + env(safe-area-inset-bottom,0px))!important}
+.view [style*="bottom:4.5rem"]{bottom:.6rem!important}
+#mBtn{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;border:1px solid var(--line);background:rgba(124,200,255,.06);color:var(--fg);cursor:pointer;padding:0;transition:background .2s,transform .15s}
+#mBtn:hover{background:rgba(124,200,255,.14)}#mBtn:active{transform:scale(.94)}
+#mBtn span{position:relative;display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:background .2s}
+#mBtn span::before,#mBtn span::after{content:"";position:absolute;inset-inline:0;height:2px;border-radius:2px;background:currentColor;transition:transform .25s var(--ease,ease)}
+#mBtn span::before{top:-6px}#mBtn span::after{top:6px}
+#mBtn[aria-expanded="true"] span{background:transparent}
+#mBtn[aria-expanded="true"] span::before{transform:translateY(6px) rotate(45deg)}#mBtn[aria-expanded="true"] span::after{transform:translateY(-6px) rotate(-45deg)}
+#mDr{position:fixed;inset:0;z-index:90;visibility:hidden}
+#mDr.open{visibility:visible}
+#mDr .bk{position:absolute;inset:0;background:rgba(3,8,18,.55);opacity:0;transition:opacity .28s;-webkit-backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#mDr.open .bk{opacity:1}
+#mDr .pn{position:absolute;top:0;bottom:0;inset-inline-start:0;width:min(330px,86vw);overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(180deg,#0b1b38,#071226);border-inline-end:1px solid var(--line);box-shadow:0 0 50px rgba(0,0,0,.5);padding:calc(1rem + env(safe-area-inset-top,0px)) 1rem calc(1rem + env(safe-area-inset-bottom,0px));padding-inline-start:max(1rem,env(safe-area-inset-right,0px));transform:translateX(105%);transition:transform .32s cubic-bezier(.2,.9,.2,1)}
+html[dir="ltr"] #mDr .pn{transform:translateX(-105%)}
+#mDr.open .pn{transform:none}
+.mhd{display:flex;gap:.7rem;align-items:center;padding:.3rem .2rem 1rem;border-bottom:1px solid var(--line);margin-bottom:.8rem}
+.mhd .av{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;background:rgba(124,200,255,.1);flex:none}
+.mhd b{display:block}.mhd small{color:var(--dim)}
+.mhd .x{margin-inline-start:auto;all:unset;cursor:pointer;width:36px;height:36px;display:grid;place-items:center;border-radius:11px;border:1px solid var(--line)}
+.mls{display:grid;gap:.3rem}
+.mit{all:unset;cursor:pointer;display:flex;align-items:center;gap:.8rem;padding:.75rem .8rem;border-radius:14px;font-weight:700;color:var(--fg);transition:background .2s;opacity:0;transform:translateX(18px)}
+#mDr.open .mit{opacity:1;transform:none;transition:background .2s,opacity .3s ease calc(var(--i)*35ms),transform .35s cubic-bezier(.2,.9,.2,1) calc(var(--i)*35ms)}
+.mit:hover,.mit:focus-visible{background:rgba(124,200,255,.1)}
+.mit:focus-visible{outline:2px solid #7cc8ff;outline-offset:-2px}
+.mit .e{font-size:1.35rem;width:1.8rem;text-align:center}
+.mit small{display:block;font-weight:400;color:var(--dim);font-size:.78rem}
+.mit.on{background:linear-gradient(135deg,rgba(59,140,255,.3),rgba(59,140,255,.08));box-shadow:inset 0 0 0 1px rgba(124,200,255,.35)}
+.mit.on::after{content:"";margin-inline-start:auto;width:7px;height:7px;border-radius:50%;background:#7cc8ff;box-shadow:0 0 10px #7cc8ff}
+.msh{font-size:.78rem;color:var(--dim);font-weight:800;margin:1rem .4rem .3rem;letter-spacing:.03em}
+.mgr{display:grid;grid-template-columns:1fr 1fr;gap:.35rem}
+.mgr .mit{padding:.6rem .6rem;font-size:.9rem;gap:.5rem}
+.mgr .mit .e{font-size:1.1rem;width:auto}
+.mft{margin-top:1.2rem;padding-top:.8rem;border-top:1px solid var(--line);font-size:.75rem;color:var(--dim);line-height:1.7}
+html.nomo #mDr .pn,html.nomo .mit{transition:none!important}
+@media print{#mBtn,#mDr{display:none!important}}
+[tabindex="-1"]:focus,[tabindex="-1"]:focus-visible{outline:none!important}
+.ring2 span{white-space:nowrap}
+@media (max-width:480px){#bSet{display:none!important}.top .in{gap:.45rem}}
+@media (max-width:370px){#bFind{display:none!important}.top .brand span:last-child{font-size:.95rem}}
+</style>
+<script>
+'use strict';
+const MQUICK=[['find','🔍','بحث'],['summary','📒','الملخص'],['radio','🎵','راديو الدراسة'],['explain','🖥️','وضع الشرح'],['kit','🧰','حقيبة الأدوات'],['study','📚','غرفة التدريب'],['office','🗂️','مكتب المحقق'],['prefs','⚙️','الإعدادات']];
+const MSUB={home:'لوحتك وملفات القضايا','tab-train':'اختبارات وألعاب ومراجعة',exams:'امتحاناتك والملخص والخطة','tab-teach':'الشرح وأدوات الصف','tab-tools':'المختبرات والأدوات','tab-me':'تقدّمك وإعداداتك'};
+(function(){const top=$('.top .in');if(!top)return;const b=document.createElement('button');b.id='mBtn';b.type='button';b.setAttribute('aria-label','القائمة');b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','mDr');b.innerHTML='<span></span>';top.prepend(b);
+ const d=document.createElement('div');d.id='mDr';d.setAttribute('aria-hidden','true');document.body.appendChild(d);
+ let lastFocus=null;
+ const paint=()=>{const r=rankOf(xp()),t=tabOf(CUR);const nm=ST.name&&!ST.dx.priv?esc(ST.name):'محقق';let i=0;
+  d.innerHTML=`<div class="bk"></div><nav class="pn" role="dialog" aria-modal="true" aria-label="القائمة الرئيسية"><div class="mhd"><div class="av">${esc(ST.av||'🕵️')}</div><div style="min-width:0"><b>${nm}</b><small>${esc(r.name)} · ${bookProg()}% من الكتاب</small></div><button class="x" id="mX" aria-label="سدّ القائمة">✕</button></div>
+  <div class="mls">${TABS.map(x=>`<button class="mit ${x[0]===t?'on':''}" data-go="${x[0]}" style="--i:${i++}" ${x[0]===t?'aria-current="page"':''}><span class="e">${x[1]}</span><span>${x[2]}<small>${MSUB[x[0]]||''}</small></span></button>`).join('')}</div>
+  <p class="msh">⚡ وصول سريع</p><div class="mgr">${MQUICK.map(x=>`<button class="mit" data-go="${x[0]}" style="--i:${i++}"><span class="e">${x[1]}</span><span>${x[2]}</span></button>`).join('')}</div>
+  <div class="mft">📘 التحقيق الجنائي الرقمي · الصف الثالث<br>إعدادية العباس المهنية · قسم الأمن السيبراني — كربلاء المقدسة<br>Alt + 1…6 للتبويبات · Esc للإغلاق</div></nav>`;
+  $('#mX').onclick=close;$('.bk',d).onclick=close};
+ function open(){paint();lastFocus=document.activeElement;d.classList.add('open');d.setAttribute('aria-hidden','false');b.setAttribute('aria-expanded','true');document.documentElement.style.overflow='hidden';setTimeout(()=>{const f=$('.mit.on',d)||$('.mit',d);f&&f.focus({preventScroll:true})},60);try{navigator.vibrate&&!dxOpt('nobuzz')&&navigator.vibrate(8)}catch(e){}}
+ function close(){if(!d.classList.contains('open'))return;d.classList.remove('open');d.setAttribute('aria-hidden','true');b.setAttribute('aria-expanded','false');document.documentElement.style.overflow='';if(lastFocus&&lastFocus.focus)try{lastFocus.focus({preventScroll:true})}catch(e){}}
+ window.MENU={open,close,toggle:()=>d.classList.contains('open')?close():open()};
+ b.onclick=e=>{e.stopPropagation();MENU.toggle()};
+ d.addEventListener('click',e=>{if(e.target.closest('[data-go]'))setTimeout(close,0)});
+ addEventListener('keydown',e=>{if(!d.classList.contains('open'))return;if(e.key==='Escape'){e.preventDefault();close();return}
+  if(e.key==='Tab'){const f=$$('button',d);const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){const f=$$('.mit',d);const k=f.indexOf(document.activeElement);if(k>-1){e.preventDefault();f[(k+(e.key==='ArrowDown'?1:-1)+f.length)%f.length].focus()}}});
+ /* swipe the drawer closed toward its edge */
+ let sx=null;d.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});d.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if((document.dir==='rtl'||document.documentElement.dir==='rtl')?dx>60:dx<-60)close()},{passive:true});
+ document.addEventListener('view',close)})();
+CHANGES[0].l.push('☰ الأقسام صارت بقائمة ثلاث خطوط، وما يبقى شريط يغطي الصفحة','📅 التاريخ الميلادي يم التاريخ الهجري بالرئيسية');
 </script>
 
 <script>
