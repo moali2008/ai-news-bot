@@ -8,8 +8,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          for u in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
-            curl -sS --fail -m 200 --data-urlencode data@tools/q.txt "$u" -o raw.json && break; sleep 5; done
-          ls -la raw.json && cd . && python3 tools/pack.py && gzip -9 -k la.json && ls -la la.json*
+          set +e
+          for u in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass.private.coffee/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
+            echo "== $u" >> log.txt
+            curl -sS -m 240 -A "dfbook-edu-game/1.0 (github.com/moali2008)" --data-urlencode data@tools/q.txt "$u" -o raw.json -w "http %{http_code} size %{size_download}\n" >> log.txt 2>&1
+            head -c 300 raw.json >> log.txt; echo >> log.txt
+            python3 -c "import json;json.load(open('raw.json'))" 2>>log.txt && break
+            sleep 10
+          done
+          python3 tools/pack.py >> log.txt 2>&1
+          ls -la >> log.txt
           git config user.name osm-bot && git config user.email osm-bot@users.noreply.github.com
-          git add la.json && git commit -m "[data] downtown LA from OpenStreetMap" && git push
+          git add log.txt; [ -f la.json ] && git add la.json
+          git commit -m "[data] downtown LA from OpenStreetMap" && git push
