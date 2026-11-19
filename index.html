@@ -11236,6 +11236,223 @@ function pwaBind(){const b=$('#pwaBtn');if(b)b.onclick=async()=>{if(!PWA.prompt)
 CHANGES[0].l.push('📲 جديد: الرابط صار يشتغل بدون إنترنت بعد أول فتحة، وتگدر تثبّته على الموبايل مثل التطبيق');
 </script>
 
+<style>
+.exg{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem}
+.extype{display:grid;gap:.3rem;text-align:start;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:16px;padding:1rem;cursor:pointer;font:inherit}
+.extype.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,140,255,.35)}
+.extype b{font-size:1.1rem}.extype small{color:var(--dim)}.extype .e{font-size:1.8rem}
+.scope{border:1px solid var(--line);border-radius:14px;margin:.5rem 0;overflow:hidden}
+.scope>header{display:flex;gap:.6rem;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:var(--surface);flex-wrap:wrap}
+.scope>header label{display:flex;gap:.5rem;align-items:center;font-weight:700;cursor:pointer}
+.scope .ls{display:grid;gap:.2rem;padding:.4rem .8rem .7rem}
+.scope .ls label{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer;font-size:.92rem;padding:.2rem 0}
+.scope .ls .no{font-family:var(--f-mono);color:var(--ev);min-width:2.4rem}
+.excard{border:1px solid var(--line);border-radius:16px;padding:1rem;background:var(--surface);margin:.7rem 0}
+.excard .acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+.smh{border-bottom:2px solid var(--accent);padding-bottom:.4rem;margin:1.4rem 0 .6rem;display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:baseline}
+.sml{border:1px solid var(--line);border-radius:14px;padding:.8rem 1rem;margin:.6rem 0;background:var(--surface);break-inside:avoid}
+.sml h3{margin:0 0 .3rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}.sml h3 .no{font-family:var(--f-mono);color:var(--ev)}
+.sml ul{margin:.3rem 1.2rem 0;padding:0}.sml li{margin:.2rem 0}
+.smk{display:flex;flex-wrap:wrap;gap:.3rem;margin:.4rem 0}.smk span{border:1px solid rgba(245,197,24,.45);background:rgba(245,197,24,.1);border-radius:999px;padding:.05rem .55rem;font-size:.85rem}
+.smq{font-size:.9rem;color:var(--dim);margin-top:.4rem}.smq b{color:var(--fg)}
+.plan li{margin:.35rem 0}
+@media print{.sml{border:1px solid #999;background:#fff;color:#000}.smk span{border-color:#999;background:#f6f6f6}.smq,.smq b{color:#000}.smh{border-color:#000}}
+</style>
+<script>
+'use strict';
+/* ===== الامتحانات النهائية + الملخص: the student defines exactly what is in the exam, the platform builds the summary, practice exam and plan ===== */
+const EXT=[['month','📅','امتحان شهري','فصل أو جزء من فصل'],['mid','🧭','امتحان نصف السنة','حدّد كم فصل (مثلاً الأول ونص الثاني)'],['final','🏁','الامتحان النهائي','الفصول اللي يحددها المدرس'],['wiz','🏛️','الامتحان الوزاري','الكتاب كامل (كل الفصول)']];
+const exNo=(c,i)=>c+'.'+i;
+const exLessons=()=>{const L=[];readyN().forEach(c=>BOOK.ch[c].lessons.forEach((l,i)=>L.push({k:'l-'+c+'-'+(i+1),c,i:i+1,l})));return L};
+const exGet=id=>(ST.dx.exs||[]).find(e=>e.id===id);
+function exScopeLabel(sc){const by={};sc.forEach(k=>{const m=/^l-(\d)-(\d+)$/.exec(k);if(m)(by[m[1]]=by[m[1]]||[]).push(+m[2])});return Object.keys(by).sort().map(c=>{const n=BOOK.ch[c].lessons.length,a=by[c].sort((x,y)=>x-y);return a.length===n?'الفصل '+c+' كامل':'الفصل '+c+' ('+a.map(i=>c+'.'+i).join('، ')+')'}).join(' + ')||'ماكو دروس'}
+const exPages=sc=>sc.map(k=>{const m=/^l-(\d)-(\d+)$/.exec(k);return m&&BOOK.ch[m[1]].lessons[m[2]-1]}).filter(Boolean).map(l=>pgRange(l.page)).filter(Boolean);
+const exHit=(p,R)=>{const r=pgRange(p);return!!r&&R.some(x=>r[0]<=x[1]&&r[1]>=x[0])};
+function exPool(sc){const R=exPages(sc),chs=[...new Set(sc.map(k=>+k.split('-')[1]))];const Q=sQ().filter(q=>chs.includes(q.ch)&&exHit(q.p,R));
+ sc.forEach(k=>{const m=/^l-(\d)-(\d+)$/.exec(k);const L=BOOK.ch[m[1]].lessons[m[2]-1];(L.check||[]).forEach((q,j)=>{if(Array.isArray(q.o))Q.push({...q,t:'mc',ch:+m[1],k:k+'-c'+j})})});return Q}
+const exCover=sc=>sc.length?Math.round(100*sc.filter(k=>ST.done[k]).length/sc.length):0;
+/* the scope picker: chapter → its lessons in book order, with "first half" shortcut */
+function exPicker(sel){const S=new Set(sel);return readyN().map(c=>{const L=BOOK.ch[c].lessons,all=L.every((_,i)=>S.has('l-'+c+'-'+(i+1))),some=L.some((_,i)=>S.has('l-'+c+'-'+(i+1)));
+ return`<div class="scope"><header><label><input type="checkbox" data-sc="${c}" ${all?'checked':''} ${!all&&some?'data-part="1"':''}> الفصل ${c}: ${esc(BOOK.ch[c].t)}</label><span class="row" style="gap:.3rem"><button type="button" class="btn sm" data-half="${c}">نص الفصل الأول</button><button type="button" class="btn sm" data-half2="${c}">النص الثاني</button></span></header>
+ <div class="ls">${L.map((l,i)=>{const k='l-'+c+'-'+(i+1);return`<label><input type="checkbox" data-lk="${k}" ${S.has(k)?'checked':''}><span class="no">${exNo(c,i+1)}</span><span>${esc(l.title)} <small style="color:var(--dim)">ص${esc(l.page)}</small></span></label>`}).join('')}</div></div>`}).join('')}
+function exBindPicker(onChange){const sync=()=>{$$('[data-sc]').forEach(cb=>{const c=cb.dataset.sc;const ls=$$(`[data-lk^="l-${c}-"]`);const n=ls.filter(x=>x.checked).length;cb.checked=n===ls.length;cb.indeterminate=n>0&&n<ls.length});onChange&&onChange()};
+ $$('[data-sc]').forEach(cb=>cb.onchange=()=>{$$(`[data-lk^="l-${cb.dataset.sc}-"]`).forEach(x=>x.checked=cb.checked);sync()});$$('[data-lk]').forEach(x=>x.onchange=sync);
+ $$('[data-half]').forEach(b=>b.onclick=()=>{const ls=$$(`[data-lk^="l-${b.dataset.half}-"]`);const h=Math.ceil(ls.length/2);ls.forEach((x,i)=>x.checked=i<h);sync()});
+ $$('[data-half2]').forEach(b=>b.onclick=()=>{const ls=$$(`[data-lk^="l-${b.dataset.half2}-"]`);const h=Math.ceil(ls.length/2);ls.forEach((x,i)=>x.checked=i>=h);sync()});sync()}
+const exSel=()=>$$('[data-lk]:checked').map(x=>x.dataset.lk);
+let exDraft={type:'mid'};
+route('exams',()=>{const E=ST.dx.exs||[];
+ after(()=>{$$('[data-ext]').forEach(b=>b.onclick=()=>{exDraft.type=b.dataset.ext;if(exDraft.type==='wiz')exDraft.sc=exLessons().map(x=>x.k);render()});exBindPicker(()=>{const s=exSel();$('#exSum').textContent=s.length+' درس · '+exScopeLabel(s)});
+  $('#exSave').onclick=()=>{const sc=exSel();if(!sc.length)return toast('اختار درس واحد على الأقل');const t=EXT.find(x=>x[0]===exDraft.type);const e={id:'e'+Date.now().toString(36),type:exDraft.type,name:($('#exName').value.trim()||t[2]).slice(0,50),date:$('#exDate').value||'',sc};ST.dx.exs=ST.dx.exs||[];ST.dx.exs.unshift(e);exDraft={type:'mid'};save();toast('✅ انحفظ الامتحان');go('exam-'+e.id)};
+  $$('[data-exdel]').forEach(b=>{let arm=0;b.onclick=()=>{if(!arm){arm=1;b.textContent='متأكد؟';setTimeout(()=>{arm=0;b.textContent='🗑'},3000);return}ST.dx.exs=ST.dx.exs.filter(e=>e.id!==b.dataset.exdel);save();render()}})});
+ const sel=exDraft.sc||(exDraft.type==='wiz'?exLessons().map(x=>x.k):[]);
+ return{html:`<div class="eyebrow">مكتب المحقق</div><h1 style="font-size:2.1rem;margin:.2rem 0 .4rem">🎓 الامتحانات النهائية</h1><p style="color:var(--dim);margin-bottom:1rem">بلّغنا شنو داخل بامتحانك بالضبط (فصول أو دروس)، ونسويلك ملخص وامتحان تجريبي وخطة مذاكرة على قده.</p>
+ ${E.length?`<h2>امتحاناتي</h2>${E.map(e=>{const t=EXT.find(x=>x[0]===e.type)||EXT[0],cv=exCover(e.sc),d=e.date?sDays(e.date):null;return`<div class="excard"><div class="row" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap"><b>${t[1]} ${esc(e.name)}</b><span>${d!=null?(d>=0?'<span class="pill" style="border-color:var(--ev);color:var(--ev)">باقي '+d+' يوم</span>':'<span class="pill">انتهى</span>'):''} <button class="btn sm" data-exdel="${e.id}">🗑</button></span></div><small style="color:var(--dim)">${esc(exScopeLabel(e.sc))} · ${e.sc.length} درس</small><div class="gauge" style="margin-top:.5rem"><i style="--w:${cv}%"></i></div><small>درست ${cv}% من دروس الامتحان</small>
+  <div class="acts"><button class="btn pri sm" data-go="exam-${e.id}">فتح</button><button class="btn sm" data-go="sumx-${e.id}">📒 الملخص</button><button class="btn sm" data-go="exq-${e.id}">📝 امتحان تجريبي</button></div></div>`}).join('')}`:''}
+ <h2 style="margin-top:1.4rem">➕ امتحان جديد</h2><div class="exg">${EXT.map(t=>`<button class="extype ${exDraft.type===t[0]?'on':''}" data-ext="${t[0]}"><span class="e">${t[1]}</span><b>${t[2]}</b><small>${t[3]}</small></button>`).join('')}</div>
+ <div class="card olf" style="margin-top:1rem;display:grid;gap:.6rem"><div class="row" style="gap:.6rem;flex-wrap:wrap"><label style="flex:1;min-width:12rem">اسم الامتحان<input id="exName" class="olin" maxlength="50" placeholder="${esc((EXT.find(x=>x[0]===exDraft.type)||EXT[1])[2])}" style="width:100%"></label><label>موعده (اختياري)<input id="exDate" class="olin" type="date"></label></div>
+ <b>شنو داخل بالامتحان؟ <small style="color:var(--dim)">(اختار فصول كاملة، أو دروس معيّنة، أو «نص الفصل»)</small></b>${exPicker(sel)}<div class="row" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap;position:sticky;bottom:4.5rem;background:var(--bg2);padding:.5rem;border-radius:12px;border:1px solid var(--line)"><span id="exSum" style="color:var(--dim)"></span><button class="btn pri" id="exSave">💾 احفظ وسوّيلي الملخص</button></div></div>`,crumbs:[['exams','الامتحانات النهائية']]}});
+/* one exam: overview + plan */
+function exPlan(e){if(!e.date)return'';const days=sDays(e.date);if(days<1)return'';const left=e.sc.filter(k=>!ST.done[k]);const study=Math.max(1,days-1);const per=Math.ceil(left.length/study)||0;const D=[];for(let d=0;d<Math.min(study,30)&&d*per<left.length;d++)D.push(left.slice(d*per,(d+1)*per));
+ const dt=n=>{const x=new Date(Date.now()+n*864e5);return x.toLocaleDateString('ar-IQ',{weekday:'long',day:'numeric',month:'long'})};
+ return`<div class="card" style="margin-top:1rem"><h3>🗓️ خطة المذاكرة لحد الامتحان</h3>${left.length?`<ol class="plan" style="margin:.3rem 1.2rem 0;padding:0">${D.map((g,d)=>`<li><b>${dt(d)}:</b> ${g.map(k=>{const m=k.split('-');return`<a href="#${k}">${m[1]}.${m[2]} ${esc(BOOK.ch[m[1]].lessons[m[2]-1].short||'')}</a>`}).join('، ')}</li>`).join('')}<li><b>${dt(Math.min(study,30))}:</b> مراجعة: <a href="#sumx-${e.id}">الملخص</a> + <a href="#exq-${e.id}">امتحان تجريبي</a></li></ol>`:'<p>✅ خلّصت كل دروس الامتحان. ركّز على الملخص والامتحان التجريبي.</p>'}</div>`}
+route('exam-([a-z0-9]+)',id=>{const e=exGet(id);if(!e)return{html:'<p>الامتحان غير موجود</p><button class="btn" data-go="exams">رجوع</button>'};const t=EXT.find(x=>x[0]===e.type)||EXT[0];const pool=exPool(e.sc);const cv=exCover(e.sc);
+ const bq=[];[...new Set(e.sc.map(k=>+k.split('-')[1]))].forEach(c=>(BOOK.ch[c].bookQs||[]).forEach(q=>{if(exHit(q.p,exPages(e.sc)))bq.push({...q,ch:c})}));
+ const best=(ST.dx.exb||{})[id];after(()=>{$('#exEdit').onclick=()=>{exDraft={type:e.type,sc:e.sc.slice()};ST.dx.exs=ST.dx.exs.filter(x=>x.id!==id);save();go('exams')}});
+ return{html:`<div class="eyebrow">${t[1]} ${t[2]}</div><h1 style="font-size:2rem;margin:.2rem 0">${esc(e.name)}</h1><p style="color:var(--dim)">${esc(exScopeLabel(e.sc))}${e.date?' · '+esc(e.date)+' (باقي '+sDays(e.date)+' يوم)':''}</p>
+ <div class="dxgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.7rem;margin:1rem 0">${[[e.sc.length,'درس بالامتحان'],[cv+'%','درستها'],[pool.length,'سؤال تدريب'],[bq.length,'سؤال من الكتاب'],[best!=null?best+'%':'—','أفضل تجريبي']].map(k=>`<div class="stat"><b>${k[0]}</b><small>${k[1]}</small></div>`).join('')}</div>
+ <div class="kitg">${[['sumx-'+id,'📒','الملخص','كل درس: النقاط، المصطلحات، الأسئلة المتوقعة'],['exq-'+id,'📝','امتحان تجريبي','بدون تصحيح لحد التسليم، وتحليل للنتيجة'],['exbk-'+id,'📘','أسئلة الكتاب ضمن المنهج','اكشف الجواب النموذجي'],['exlist-'+id,'📖','دروس الامتحان بالترتيب','ادرسها وحدة وحدة']].map(x=>`<button class="kitt" data-go="${x[0]}"><span class="e">${x[1]}</span><span><b>${x[2]}</b><small>${x[3]}</small></span></button>`).join('')}</div>
+ ${exPlan(e)}<div class="row" style="gap:.5rem;margin-top:1rem"><button class="btn" data-go="exams">← امتحاناتي</button><button class="btn" id="exEdit">✏️ عدّل المنهج</button></div>`,crumbs:[['exams','الامتحانات'],['exam-'+id,e.name]]}});
+route('exlist-([a-z0-9]+)',id=>{const e=exGet(id);if(!e)return{html:''};return{html:`<h1 style="font-size:1.9rem;margin:.2rem 0 1rem">📖 دروس ${esc(e.name)}</h1><div class="list">${e.sc.map(k=>{const m=k.split('-');const L=BOOK.ch[m[1]].lessons[m[2]-1];return`<button class="item" data-go="${k}"><span>${ST.done[k]?'✅':'📖'}</span><span><b>${m[1]}.${m[2]} ${esc(L.title)}</b><small>ص${esc(L.page)}</small></span><span>›</span></button>`}).join('')}</div>`,crumbs:[['exams','الامتحانات'],['exam-'+id,e.name],['exlist-'+id,'الدروس']]}});
+route('exbk-([a-z0-9]+)',id=>{const e=exGet(id);if(!e)return{html:''};const R=exPages(e.sc);const B=[];[...new Set(e.sc.map(k=>+k.split('-')[1]))].forEach(c=>(BOOK.ch[c].bookQs||[]).forEach(q=>{if(exHit(q.p,R))B.push({...q,ch:c})}));
+ return{html:`<h1 style="font-size:1.9rem;margin:.2rem 0 1rem">📘 أسئلة الكتاب: ${esc(e.name)}</h1>${B.length?B.map((q,i)=>`<details class="sml"><summary><b>${i+1}. ${q.q}</b> ${pg(q.p)}</summary><div class="bk" style="padding:.7rem;margin-top:.5rem">${q.a}</div></details>`).join(''):'<p style="color:var(--dim)">ماكو أسئلة من نهاية الفصل تخص هذي الصفحات.</p>'}`,crumbs:[['exams','الامتحانات'],['exam-'+id,e.name],['exbk-'+id,'أسئلة الكتاب']]}});
+/* practice exam on the exact scope */
+route('exq-([a-z0-9]+)',id=>{const e=exGet(id);if(!e)return{html:''};const pool=exPool(e.sc);const N=Math.min(e.type==='wiz'?50:e.type==='month'?15:30,pool.length);
+ if(!N)return{html:'<p>ماكو أسئلة كافية لهذا المنهج</p>'};
+ after(()=>{const box=$('#sBox');const qs=shuffle(pool).slice(0,N).map(q=>({...q,ord:sOpt(q)}));const ans=new Array(N).fill(null);let left=N*45;const r0='exq-'+id;
+  const tm=setInterval(()=>{if(CUR!==r0){clearInterval(tm);return}left--;const t=$('#sT');if(t)t.textContent=String(left/60|0).padStart(2,'0')+':'+String(left%60).padStart(2,'0');if(left<=0){clearInterval(tm);fin()}},1000);
+  box.innerHTML=qs.map((q,i)=>`<div class="qcard" style="margin-bottom:.7rem"><b>${i+1}. ${q.q}</b> <span class="pill">ف${q.ch}</span><div class="opt3">${q.ord.map(j=>`<button class="qopt" data-q="${i}" data-i="${j}">${q.o[j]}</button>`).join('')}</div></div>`).join('')+`<button class="btn pri" id="reGo">📤 سلّم الورقة</button>`;
+  $$('.qopt',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.q;ans[i]=+b.dataset.i;$$(`.qopt[data-q="${i}"]`,box).forEach(x=>x.classList.toggle('on',x===b));$('#sA').textContent=ans.filter(a=>a!=null).length});
+  let sure=0;$('#reGo').onclick=()=>{const miss=ans.filter(a=>a==null).length;if(miss&&!sure){sure=1;toast('بقي '+miss+' سؤال. اضغط سلّم مرة ثانية');return}fin()};
+  const fin=()=>{clearInterval(tm);const wrong=qs.filter((q,i)=>ans[i]!==q.a);sTrack(qs,wrong);const pc=Math.round(100*(N-wrong.length)/N);ST.dx.exb=ST.dx.exb||{};ST.dx.exb[id]=Math.max(ST.dx.exb[id]||0,pc);save();
+   const byL={};qs.forEach((q,i)=>{const L=e.sc.find(k=>{const m=k.split('-');const l=BOOK.ch[m[1]].lessons[m[2]-1];return +m[1]===q.ch&&exHit(q.p,[pgRange(l.page)].filter(Boolean))})||('l-'+q.ch+'-?');const o=byL[L]=byL[L]||{n:0,ok:0};o.n++;if(ans[i]===q.a)o.ok++});
+   box.innerHTML=`<div class="card" style="text-align:center"><div class="sbig">${pc}%</div><p>${N-wrong.length} صح من ${N} · ${pc>=90?'ممتاز 🏆':pc>=70?'جاهز تقريباً ✅':pc>=50?'تحتاج مراجعة':'ارجع للملخص والدروس'}</p></div>
+   <div class="card" style="margin-top:1rem"><h3>📊 حسب الدرس</h3>${Object.keys(byL).sort().map(k=>{const o=byL[k],r=Math.round(100*o.ok/o.n),m=k.split('-');const L=m[2]!=='?'&&BOOK.ch[m[1]].lessons[m[2]-1];return`<div style="margin:.45rem 0"><div class="row" style="justify-content:space-between"><a href="#${L?k:'ch-'+m[1]}">${L?m[1]+'.'+m[2]+' '+esc(L.short||L.title):'الفصل '+m[1]}</a><span>${o.ok}/${o.n}</span></div><div class="gauge"><i style="--w:${r}%"></i></div></div>`}).join('')}</div>
+   <div class="card" style="margin-top:1rem"><h3>❌ راجع هذني</h3>${wrong.length?wrong.map(q=>`<div class="item" style="cursor:default"><span>❌</span><span><b>${q.q}</b><small>الصحيح: ${q.o[q.a]}</small></span>${pg(q.p)}</div>`).join(''):'<p>ولا غلطة 👏</p>'}</div><div class="row" style="gap:.5rem;margin-top:1rem"><button class="btn pri" data-go="exam-${id}">رجوع للامتحان</button><button class="btn" data-go="sumx-${id}">📒 الملخص</button></div>`;scrollTo(0,0)}});
+ return{html:`<div class="eyebrow">امتحان تجريبي</div><h1 style="font-size:1.8rem;margin:.2rem 0 .6rem">📝 ${esc(e.name)} (${N} سؤال)</h1><div class="row" style="justify-content:space-between;margin-bottom:.6rem;position:sticky;top:4rem;z-index:5"><span class="pill">⏱ <b id="sT"></b></span><span class="pill">جاوبت <b id="sA">0</b> من ${N}</span></div><div id="sBox"></div>`,crumbs:[['exams','الامتحانات'],['exam-'+id,e.name],['exq-'+id,'تجريبي']]}});
+/* ===== الملخص ===== */
+const SMC={};
+function smLesson(c,i){const k='l-'+c+'-'+i;if(SMC[k])return SMC[k];const L=BOOK.ch[c].lessons[i-1];const d=document.createElement('div');try{d.innerHTML=L.html()}catch(e){}
+ const keys=[...new Set($$('.bk .key',d).map(x=>x.textContent.replace(/\s+/g,' ').trim()).filter(t=>t.length>2&&t.length<70))].slice(0,10);
+ const heads=$$('.bk>h3',d).map(h=>h.childNodes[0]?h.childNodes[0].textContent.trim():h.textContent.trim()).filter(Boolean);
+ const R=pgRange(L.page);const T=BOOK.ch[c].terms.filter(t=>{const r=pgRange(t[3]);return r&&R&&r[0]<=R[1]&&r[1]>=R[0]});
+ return SMC[k]={L,keys,heads,T,Q:(L.check||[]).filter(q=>Array.isArray(q.o))}}
+function smHTML(sc,title,opt={}){const by={};sc.forEach(k=>{const m=/^l-(\d)-(\d+)$/.exec(k);if(m)(by[m[1]]=by[m[1]]||[]).push(+m[2])});
+ return Object.keys(by).sort().map(c=>`<div class="smh"><h2 style="margin:0">الفصل ${c}: ${esc(BOOK.ch[c].t)}</h2><small>${by[c].length} من ${BOOK.ch[c].lessons.length} درس</small></div>`+by[c].sort((a,b)=>a-b).map(i=>{const s=smLesson(c,i);
+  return`<div class="sml"><h3><span class="no">${c}.${i}</span> ${esc(s.L.title)} ${pg(s.L.page)}</h3>${s.heads.length>1?`<small style="color:var(--dim)">العناوين: ${s.heads.map(esc).join(' · ')}</small>`:''}
+  ${s.L.sum&&s.L.sum.length?`<ul>${s.L.sum.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}${s.keys.length?`<div class="smk">${s.keys.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
+  ${opt.terms!==false&&s.T.length?`<div style="margin-top:.4rem;font-size:.9rem">${s.T.slice(0,8).map(t=>`<div>🔤 <b>${esc(t[0])}</b>${t[1]?' <span class="mono" style="color:var(--dim)">('+esc(t[1])+')</span>':''}: ${esc(t[2]||'')}</div>`).join('')}</div>`:''}
+  ${opt.q!==false&&s.Q.length?`<div class="smq">❓ أسئلة متوقعة: ${s.Q.slice(0,3).map(q=>`<div>• ${q.q} ← <b>${q.o[q.a]}</b></div>`).join('')}</div>`:''}</div>`}).join('')).join('')}
+function smPage(sc,title,back,key){after(()=>{const pr=$('#smPr');if(pr)pr.onclick=()=>{try{window.print()}catch(e){}setTimeout(()=>toast('إذا ما انفتحت الطباعة، افتح الرابط بالمتصفح واطبع'),700)};$$('[data-smo]').forEach(c=>c.onchange=()=>{ST.dx.smo=ST.dx.smo||{};ST.dx.smo[c.dataset.smo]=c.checked;save();render()})});const o=ST.dx.smo||{};
+ return`<div class="row noprint" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem"><div class="row" style="gap:.6rem;flex-wrap:wrap"><label><input type="checkbox" data-smo="noT" ${o.noT?'checked':''}> بدون المصطلحات</label><label><input type="checkbox" data-smo="noQ" ${o.noQ?'checked':''}> بدون الأسئلة</label></div><span class="row" style="gap:.4rem"><button class="btn sm pri" id="smPr">🖨 اطبع / PDF</button>${back?`<button class="btn sm" data-go="${back}">رجوع</button>`:''}</span></div>
+ <h1 style="font-size:2rem;margin:.2rem 0 .2rem">📒 ${esc(title)}</h1><p style="color:var(--dim)">${esc(exScopeLabel(sc))} · ${sc.length} درس · بترتيب الكتاب، وكل نقطة برقم صفحتها</p>${smHTML(sc,title,{terms:!o.noT,q:!o.noQ})}
+ <div class="sum" style="margin-top:1rem">💡 بعد ما تقرا الملخص: سوّي <a href="#${key?'exq-'+key:'exams'}">امتحان تجريبي</a> على نفس المنهج.</div>`}
+route('sumx-([a-z0-9]+)',id=>{const e=exGet(id);if(!e)return{html:''};return{html:smPage(e.sc,'ملخص '+e.name,'exam-'+id,id),crumbs:[['exams','الامتحانات'],['exam-'+id,e.name],['sumx-'+id,'الملخص']]}});
+/* the standalone «الملخص» entry: pick any scope quickly */
+route('summary',()=>{const E=ST.dx.exs||[];const sel=ST.dx.smSel||[];after(()=>{exBindPicker(()=>{const s=exSel();$('#exSum').textContent=s.length+' درس';ST.dx.smSel=s;save()});$('#smGo').onclick=()=>{if(!exSel().length)return toast('اختار الدروس');go('sumsel')};$('#smAll').onclick=()=>{ST.dx.smSel=exLessons().map(x=>x.k);save();go('sumsel')}});
+ return{html:`<div class="eyebrow">مكتب المحقق</div><h1 style="font-size:2.1rem;margin:.2rem 0 .4rem">📒 الملخص</h1><p style="color:var(--dim)">اختار شنو تريد ملخصه: فصل، دروس معيّنة، أو امتحان محفوظ.</p>
+ ${E.length?`<div class="card"><h3>من امتحاناتي</h3>${E.map(e=>`<button class="item" data-go="sumx-${e.id}"><span>📒</span><span><b>${esc(e.name)}</b><small>${esc(exScopeLabel(e.sc))}</small></span><span>›</span></button>`).join('')}</div>`:''}
+ <div class="card" style="margin-top:1rem"><div class="row" style="justify-content:space-between;gap:.5rem;flex-wrap:wrap"><h3>اختار الدروس</h3><button class="btn sm" id="smAll">📚 ملخص الكتاب كامل</button></div>${exPicker(sel)}<div class="row" style="justify-content:space-between;gap:.5rem;position:sticky;bottom:4.5rem;background:var(--bg2);padding:.5rem;border-radius:12px;border:1px solid var(--line)"><span id="exSum" style="color:var(--dim)"></span><button class="btn pri" id="smGo">📒 سوّي الملخص</button></div></div>
+ <p style="color:var(--dim);font-size:.88rem;margin-top:.8rem">تريد ملخص الفصل الجاهز بتصميم A4؟ تلگاه بصفحة كل فصل («ملخص الفصل»).</p>`,crumbs:[['summary','الملخص']]}});
+route('sumsel',()=>({html:smPage(ST.dx.smSel||[],'الملخص','summary',''),crumbs:[['summary','الملخص'],['sumsel','ملخصي']]}));
+/* entry points */
+document.addEventListener('view',e=>{if(e.detail==='home'){const t=$('#dxTiles');if(t&&!$('#exTiles'))t.insertAdjacentHTML('beforeend',`<span id="exTiles" style="display:contents">${[['exams','🎓','الامتحانات النهائية','شهري، نصف السنة، الوزاري','var(--c4)'],['summary','📒','الملخص','على قد منهج امتحانك','var(--c5)'],['explain','👨‍🏫','وضع الشرح','للمدرس: الدرس 1.1، 1.2… على السبورة','var(--c1)']].map(x=>`<button class="tile" style="--tc:${x[4]}" data-go="${x[0]}"><span class="glow"></span><span class="ic" style="display:grid;place-items:center;font-size:1.5rem">${x[1]}</span><b>${x[2]}</b><small>${x[3]}</small></button>`).join('')}</span>`)}});
+</script>
+
+<style>
+.pres{position:fixed;inset:0;z-index:150;background:var(--bg);display:grid;grid-template-rows:auto 1fr auto;--ps:1}
+.pres .ptop{display:flex;gap:.6rem;align-items:center;justify-content:space-between;padding:calc(.5rem + env(safe-area-inset-top,0px)) max(1rem,env(safe-area-inset-right,0px)) .5rem max(1rem,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:rgba(6,16,36,.9)}
+.pres .ptop b{font-family:var(--f-display);font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pres .ptop .no{font-family:var(--f-mono);color:var(--ev);font-size:1.15rem}
+.pstage{overflow-y:auto;overflow-x:hidden;padding:1.2rem max(1rem,env(safe-area-inset-right,0px)) 1.2rem max(1rem,env(safe-area-inset-left,0px));position:relative}
+.pslide{max-width:74rem;margin:0 auto;font-size:calc(var(--ps)*clamp(1.02rem,1.55vw,1.55rem));line-height:1.95;animation:pin .35s ease}
+.pslide[hidden]{display:none!important}
+@keyframes pin{from{opacity:0;transform:translateX(-14px)}}
+.pslide .bk{font-size:1em}.pslide .bk>h3,.pslide .viz>h3{font-size:1.35em}
+.pslide .stitle{font-family:var(--f-display);font-size:1.6em;margin:.2rem 0 .8rem;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.pslide .stitle .kind{font-size:.5em;border:1px solid var(--line);border-radius:999px;padding:.05rem .6rem;color:var(--dim)}
+.pcover{min-height:62vh;display:grid;align-content:center;gap:.6rem;text-align:center}
+.pcover .big{font-family:var(--f-mono);font-size:3.4em;color:var(--ev);line-height:1}
+.pcover h1{font-size:2.2em;margin:0}.pcover .lead{color:var(--dim);max-width:46rem;margin:0 auto}
+.pagenda{display:grid;gap:.3rem;max-width:40rem;margin:1rem auto 0;text-align:start;font-size:.8em}
+.pagenda button{all:unset;cursor:pointer;padding:.25rem .6rem;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.preveal{margin-top:.8rem}.preveal>button{font:inherit;font-size:.8em}.preveal .iq{margin-top:.5rem}
+.ppoll{display:grid;gap:.6rem;margin-top:.6rem}
+.ppoll .popt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.8rem;align-items:center;text-align:start;font:inherit;font-size:1em;border:2px solid var(--line);background:var(--surface);color:var(--fg);border-radius:14px;padding:.6rem 1rem;cursor:pointer}
+.ppoll .popt .l{font-family:var(--f-mono);color:var(--ev);font-weight:800}.ppoll .popt .n{font-family:var(--f-mono);min-width:2.2em;text-align:center;border-radius:999px;background:rgba(59,140,255,.18);padding:0 .4rem}
+.ppoll .popt.ok{border-color:var(--ok);background:rgba(52,211,153,.14)}
+.pbar{display:flex;gap:.35rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.45rem max(.6rem,env(safe-area-inset-right,0px)) calc(.45rem + env(safe-area-inset-bottom,0px)) max(.6rem,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:rgba(6,16,36,.92)}
+.pbar button{font:inherit;min-width:2.6rem;height:2.6rem;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;font-size:1rem;padding:0 .6rem}
+.pbar button.on{border-color:var(--ev);background:rgba(245,197,24,.18)}.pbar button.nav{background:linear-gradient(135deg,#5aa9ff,#2563eb);color:#fff;border:0;min-width:3.4rem}
+.pbar .cnt{font-family:var(--f-mono);min-width:4.2rem;text-align:center}
+.pprog{position:absolute;inset:auto 0 0 0;height:3px;background:rgba(255,255,255,.06)}.pprog i{display:block;height:100%;background:var(--ev);transition:width .3s}
+#pInk{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;touch-action:none}#pInk.on{pointer-events:auto;cursor:crosshair}
+#pLaser{position:fixed;width:18px;height:18px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 18px 6px rgba(255,59,59,.6);pointer-events:none;z-index:160;transform:translate(-50%,-50%);display:none}
+#pBlack{position:fixed;inset:0;background:#000;z-index:170;display:none;cursor:pointer}
+.pover{position:fixed;inset:0;z-index:165;background:rgba(3,10,24,.94);overflow:auto;padding:2rem 1rem}.pover .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.6rem;max-width:70rem;margin:0 auto}
+.pover button{font:inherit;text-align:start;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:.6rem;cursor:pointer}.pover button.cur{border-color:var(--ev)}
+.ppick{position:fixed;inset:0;z-index:166;display:grid;place-items:center;background:rgba(3,10,24,.85)}.ppick .in{background:var(--bg2);border:1px solid var(--ev);border-radius:22px;padding:1.4rem 2rem;text-align:center}.ppick .num{font-family:var(--f-mono);font-size:6rem;color:var(--ev);line-height:1.1}
+.exh .chs{display:grid;gap:1rem}.exh .lsn{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.7rem;align-items:center;width:100%;text-align:start;font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:.6rem .8rem;cursor:pointer;margin:.3rem 0}
+.exh .lsn:hover{border-color:var(--accent)}.exh .lsn .no{font-family:var(--f-mono);color:var(--ev);font-size:1.1rem;min-width:2.6rem}
+@media (max-width:560px){.pbar .opt{display:none}.pbar.more .opt{display:inline-block}}@media (min-width:561px){.pbar .mob{display:none}}
+html.paper .pres .ptop,html.paper .pbar{background:var(--bg2)}
+</style>
+<script>
+'use strict';
+/* ===== وضع الشرح: the teacher explains each lesson on the board, in the book's order (1.1، 1.2…) ===== */
+ST.dx.taught=ST.dx.taught||{};
+route('explain',()=>({html:`<div class="exh"><div class="eyebrow">للمدرس والسبورة الذكية</div><h1 style="font-size:2.1rem;margin:.2rem 0 .4rem">👨‍🏫 وضع الشرح</h1>
+ <p style="color:var(--dim);margin-bottom:1rem">كل درس يتحول لشرائح بنفس ترتيب الكتاب: نص الكتاب برقم الصفحة، الشرح المبسّط يطلع بضغطة، الأنشطة التفاعلية تشتغل على الشاشة، وأسئلة للصف بتصويت. الأسهم أو السحب للتنقل.</p>
+ <div class="chs">${readyN().map(c=>`<div class="card"><h2 style="margin:0 0 .4rem">الفصل ${c}: ${esc(BOOK.ch[c].t)}</h2>${BOOK.ch[c].lessons.map((l,i)=>{const k='l-'+c+'-'+(i+1),t=ST.dx.taught[k];return`<button class="lsn" data-go="pres-${c}-${i+1}"><span class="no">${c}.${i+1}</span><span><b>${esc(l.title)}</b><small style="display:block;color:var(--dim)">ص${esc(l.page)}${l.lead?' · '+esc(String(l.lead).replace(/<[^>]+>/g,'').slice(0,80)):''}</small></span><span>${t?`<span class="pill" style="border-color:var(--ok);color:var(--ok)">✓ شرحته ${new Date(t).toLocaleDateString('ar-IQ',{day:'numeric',month:'short'})}</span>`:'▶'}</span></button>`}).join('')}</div>`).join('')}</div>
+ <div class="card" style="margin-top:1rem"><h3>⌨️ اختصارات العرض</h3><p style="color:var(--dim);font-size:.92rem">← أو المسافة: التالي · →: السابق · R: اكشف الشرح · P: القلم · L: مؤشر الليزر · B: شاشة سوداء · F: ملء الشاشة · O: كل الشرائح · +/−: حجم الخط · Esc: خروج</p></div></div>`,crumbs:[['explain','وضع الشرح']]}));
+let PZ=null;
+function pzBuild(c,i){const L=BOOK.ch[c].lessons[i-1];const tmp=document.createElement('div');try{tmp.innerHTML=L.html()}catch(e){tmp.innerHTML='<p>تعذّر تحميل الدرس</p>'}
+ const S=[];let last=null;
+ [...tmp.children].forEach(el=>{if(el.classList.contains('iq')&&last){last.reveal.push(el);return}
+  const h=el.querySelector(':scope>h3');const t=h?(h.childNodes[0]?h.childNodes[0].textContent:h.textContent).trim():'';const book=el.classList.contains('bk');
+  last={kind:book?'book':'act',title:t||(book?'من الكتاب':'نشاط تفاعلي'),nodes:[el],reveal:[]};S.push(last)});
+ const sm=typeof smLesson==='function'?smLesson(c,i):{T:[],keys:[]};
+ const slides=[{kind:'cover'}].concat(S);if(sm.T&&sm.T.length)slides.push({kind:'terms',title:'مصطلحات الدرس',T:sm.T});
+ (L.check||[]).filter(q=>Array.isArray(q.o)).forEach((q,j)=>slides.push({kind:'poll',title:'سؤال للصف '+(j+1),q}));slides.push({kind:'end',title:'الخلاصة'});return{L,slides,keys:sm.keys||[]}}
+route('pres-(\\d)-(\\d+)',(c,i)=>{c=+c;i=+i;const ch=BOOK.ch[c];const L=ch&&ch.lessons[i-1];if(!L)return{html:'<p>الدرس غير موجود</p>'};const key='l-'+c+'-'+i;const B=pzBuild(c,i);const N=B.slides.length;
+ const nxt=i<ch.lessons.length?'pres-'+c+'-'+(i+1):(BOOK.ch[c+1]&&BOOK.ch[c+1].ready?'pres-'+(c+1)+'-1':null);
+ after(()=>{const st=$('#pStage');PZ={c,i,key,cur:0,N,t0:Date.now(),paused:0,pAt:0,ink:false,laser:false};document.body.style.overflow='hidden';
+  B.slides.forEach((s,n)=>{const d=document.createElement('section');d.className='pslide';d.dataset.n=n;d.hidden=n!==0;
+   if(s.kind==='cover')d.innerHTML=`<div class="pcover"><div class="big">${c}.${i}</div><div class="eyebrow" style="justify-content:center">الفصل ${c} · ${esc(ch.t)} ${pg(L.page)}</div><h1>${L.title}</h1>${L.lead?`<p class="lead">${L.lead}</p>`:''}<div class="pagenda">${B.slides.map((x,k)=>k&&x.kind!=='end'?`<button data-jump="${k}">${k}. ${esc(x.title)}${x.kind==='act'?' 🧪':x.kind==='poll'?' ✋':''}</button>`:'').join('')}</div></div>`;
+   else if(s.kind==='book'||s.kind==='act'){d.innerHTML=`<div class="stitle"><span>${esc(s.title)}</span><span class="kind">${s.kind==='book'?'📖 من الكتاب':'🧪 نشاط تفاعلي'}</span></div>`;s.nodes.forEach(x=>{const h=x.querySelector(':scope>h3');if(h){const pgt=h.querySelector('.pg');if(pgt)$('.stitle',d).appendChild(pgt);h.remove()}d.appendChild(x)});
+    if(s.reveal.length){const r=document.createElement('div');r.className='preveal';r.innerHTML='<button class="btn" data-rv>🗣️ الشرح بالعراقي (R)</button>';const box=document.createElement('div');box.hidden=true;s.reveal.forEach(x=>box.appendChild(x));r.appendChild(box);d.appendChild(r)}}
+   else if(s.kind==='terms')d.innerHTML=`<div class="stitle"><span>🔤 ${esc(s.title)}</span></div><div style="display:grid;gap:.6rem">${s.T.map(t=>`<div class="bk" style="padding:.7rem 1rem"><b>${esc(t[0])}</b>${t[1]?` <span class="mono" style="color:var(--dim)">${esc(t[1])}</span>`:''}<div>${esc(t[2]||'')} ${t[3]?pg(t[3]):''}</div></div>`).join('')}</div>`;
+   else if(s.kind==='poll'){const q=s.q,ord=shuffle(q.o.map((_,k)=>k));d.innerHTML=`<div class="stitle"><span>✋ ${esc(s.title)}</span><span class="kind">اضغط على الخيار لكل يد مرفوعة</span></div><h2 style="font-size:1.4em;margin:.2rem 0">${q.q}</h2><div class="ppoll">${ord.map((k,j)=>`<button class="popt" data-k="${k}" data-a="${q.a}"><span class="l">${'أبجد'[j]||j+1}</span><span>${q.o[k]}</span><span class="n">0</span></button>`).join('')}</div><div class="row" style="gap:.5rem;margin-top:.8rem"><button class="btn pri" data-show>✅ اكشف الجواب</button><button class="btn" data-reset>↺ صفّر الأصوات</button></div><div data-why hidden class="sum" style="margin-top:.7rem">${q.why?q.why+' ':''}${pg(q.p)}</div>`}
+   else d.innerHTML=`<div class="stitle"><span>✅ ${esc(s.title)}</span></div>${L.sum&&L.sum.length?`<ul style="margin:0 1.4rem">${L.sum.map(x=>`<li style="margin:.4rem 0">${x}</li>`).join('')}</ul>`:''}${B.keys.length?`<div class="smk" style="margin-top:1rem">${B.keys.map(k=>`<span>${esc(k)}</span>`).join('')}</div>`:''}<div class="row" style="gap:.6rem;margin-top:1.4rem;flex-wrap:wrap">${nxt?`<button class="btn pri" data-go="${nxt}">▶ الدرس الجاي ${nxt.replace('pres-','').replace('-','.')}</button>`:''}<button class="btn" data-go="${key}">📖 افتح الدرس العادي</button><button class="btn" data-go="explain">☰ كل الدروس</button></div>`;
+   st.appendChild(d)});
+  try{L.init&&L.init()}catch(e){console.warn(e)}
+  st.addEventListener('click',e=>{const t=e.target;const rv=t.closest('[data-rv]');if(rv){const b=rv.nextElementSibling;b.hidden=!b.hidden;return}const j=t.closest('[data-jump]');if(j){pzGo(+j.dataset.jump);return}
+   const o=t.closest('.popt');if(o){const n=$('.n',o);n.textContent=+n.textContent+1;return}const sh=t.closest('[data-show]');if(sh){const sl=sh.closest('.pslide');$$('.popt',sl).forEach(p=>{if(p.dataset.k===p.dataset.a)p.classList.add('ok')});$('[data-why]',sl).hidden=false;window.SFX&&SFX.ok();return}
+   const rs=t.closest('[data-reset]');if(rs){const sl=rs.closest('.pslide');$$('.popt .n',sl).forEach(n=>n.textContent='0');$$('.popt',sl).forEach(p=>p.classList.remove('ok'));$('[data-why]',sl).hidden=true}});
+  pzInk();pzPaint();
+  const tmr=setInterval(()=>{if(!CUR.startsWith('pres-')){clearInterval(tmr);return}const el=$('#pTime');if(!el||PZ.paused)return;const s=Math.floor((Date.now()-PZ.t0)/1000);el.textContent=String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')},1000);
+  const bar=$('#pBar');bar.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;({prev:()=>pzGo(PZ.cur-1),next:()=>pzGo(PZ.cur+1),fp:()=>pzFont(.1),fm:()=>pzFont(-.1),ink:()=>pzToggle('ink'),clr:pzClear,laser:()=>pzToggle('laser'),black:pzBlack,over:pzOver,pick:pzPick,full:pzFull,time:pzTime,more:()=>bar.classList.toggle('more'),exit:()=>go('explain')}[a]||(()=>{}))()});
+  let tx=null;st.addEventListener('touchstart',e=>{if(PZ.ink)return;tx=e.touches[0].clientX},{passive:true});st.addEventListener('touchend',e=>{if(tx==null||PZ.ink)return;const dx=e.changedTouches[0].clientX-tx;tx=null;if(Math.abs(dx)>70)pzGo(PZ.cur+(dx>0?1:-1))},{passive:true})});
+ return{html:`<div class="pres" id="pres"><div class="ptop"><span class="no">${c}.${i}</span><b>${L.title}</b><span class="pill" id="pTime" title="وقت الشرح">00:00</span></div><div class="pstage" id="pStage"><canvas id="pInk"></canvas></div>
+ <div class="pbar" id="pBar"><button data-a="exit" title="خروج (Esc)">✕</button><button data-a="over" title="كل الشرائح (O)">☰</button><button class="nav" data-a="prev" title="السابق">→</button><span class="cnt" id="pCnt" dir="ltr">1 / ${N}</span><button class="nav" data-a="next" title="التالي">←</button>
+ <button data-a="ink" id="pbInk" title="القلم (P)">✏️</button><button data-a="clr" class="opt" title="امسح الرسم">🧽</button><button data-a="laser" id="pbLaser" class="opt" title="الليزر (L)">🔴</button><button data-a="fm" class="opt" title="تصغير الخط">A−</button><button data-a="fp" class="opt" title="تكبير الخط">A+</button><button data-a="black" class="opt" title="شاشة سوداء (B)">⬛</button><button data-a="pick" class="opt" title="اختار طالب عشوائي">🎲</button><button data-a="time" class="opt" title="إيقاف/تشغيل المؤقت">⏱</button><button data-a="full" class="opt" title="ملء الشاشة (F)">⛶</button><button data-a="more" class="mob" title="أدوات أكثر">⋯</button><div class="pprog"><i id="pProg"></i></div></div></div><div id="pLaser"></div><div id="pBlack"></div>`}});
+function pzPaint(){if(!PZ)return;$$('.pslide').forEach(s=>s.hidden=+s.dataset.n!==PZ.cur);const c=$('#pCnt');if(c)c.textContent=(PZ.cur+1)+' / '+PZ.N;const p=$('#pProg');if(p)p.style.width=(100*(PZ.cur+1)/PZ.N)+'%';const st=$('#pStage');if(st)st.scrollTop=0;pzClear();
+ if(PZ.cur===PZ.N-1&&!ST.dx.taught[PZ.key]){ST.dx.taught[PZ.key]=Date.now();save()}}
+function pzGo(n){if(!PZ)return;n=Math.max(0,Math.min(PZ.N-1,n));if(n===PZ.cur)return;PZ.cur=n;pzPaint()}
+function pzFont(d){const p=$('#pres');if(!p)return;const v=Math.max(.7,Math.min(1.8,(parseFloat(getComputedStyle(p).getPropertyValue('--ps'))||1)+d));p.style.setProperty('--ps',v);ST.dx.pzs=v;save()}
+function pzToggle(k){PZ[k]=!PZ[k];if(k==='ink'){$('#pInk').classList.toggle('on',PZ.ink);$('#pbInk').classList.toggle('on',PZ.ink)}else{$('#pLaser').style.display=PZ.laser?'block':'none';$('#pbLaser').classList.toggle('on',PZ.laser)}}
+function pzInk(){const cv=$('#pInk'),st=$('#pStage');const fit=()=>{cv.width=st.clientWidth*devicePixelRatio;cv.height=st.scrollHeight*devicePixelRatio;cv.style.height=st.scrollHeight+'px'};fit();const g=cv.getContext('2d');let drawing=false;
+ const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*devicePixelRatio,(e.clientY-r.top)*devicePixelRatio]};
+ cv.addEventListener('pointerdown',e=>{if(!PZ.ink)return;if(cv.height<st.scrollHeight*devicePixelRatio)fit();drawing=true;cv.setPointerCapture(e.pointerId);const[x,y]=pos(e);g.strokeStyle='#f5c518';g.lineWidth=4*devicePixelRatio;g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(x,y)});
+ cv.addEventListener('pointermove',e=>{if(!drawing)return;const[x,y]=pos(e);g.lineTo(x,y);g.stroke()});['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,()=>{drawing=false}));
+ const s=parseFloat(ST.dx.pzs);if(s)$('#pres').style.setProperty('--ps',s)}
+function pzClear(){const cv=$('#pInk');if(!cv)return;const st=$('#pStage');cv.width=st.clientWidth*devicePixelRatio;cv.height=st.scrollHeight*devicePixelRatio;cv.style.height=st.scrollHeight+'px'}
+function pzBlack(){const b=$('#pBlack');b.style.display=b.style.display==='block'?'none':'block';b.onclick=()=>{b.style.display='none'}}
+function pzFull(){const p=document.documentElement;try{document.fullscreenElement?document.exitFullscreen():p.requestFullscreen().catch(()=>toast('ملء الشاشة غير مدعوم هنا'))}catch(e){toast('ملء الشاشة غير مدعوم هنا')}}
+function pzTime(){if(!PZ)return;if(PZ.paused){PZ.t0+=Date.now()-PZ.pAt;PZ.paused=0}else{PZ.paused=1;PZ.pAt=Date.now()}toast(PZ.paused?'⏸ المؤقت متوقف':'▶ المؤقت يشتغل')}
+function pzOver(){const w=document.createElement('div');w.className='pover';w.innerHTML=`<div class="row" style="justify-content:space-between;max-width:70rem;margin:0 auto 1rem"><h2 style="margin:0">كل الشرائح</h2><button class="btn" data-x>✕</button></div><div class="g">${$$('.pslide').map((s,n)=>{const t=($('.stitle span',s)||$('h1',s)||{}).textContent||'شريحة';return`<button data-n="${n}" class="${n===PZ.cur?'cur':''}"><b class="mono" style="color:var(--ev)">${n+1}</b> ${esc(t)}</button>`}).join('')}</div>`;document.body.appendChild(w);w.onclick=e=>{const b=e.target.closest('[data-n]');if(b)pzGo(+b.dataset.n);if(b||e.target.closest('[data-x]')||e.target===w)w.remove()}}
+function pzPick(){const n=Math.max(2,+(ST.dx.pzn||30));const w=document.createElement('div');w.className='ppick';const r=1+Math.floor(Math.random()*n);w.innerHTML=`<div class="in"><div style="color:var(--dim)">🎲 الطالب رقم</div><div class="num">${r}</div><label style="color:var(--dim);font-size:.9rem">عدد الطلاب بالصف: <input type="number" min="2" max="99" value="${n}" id="pzN" class="olin" style="width:5rem"></label><div class="row" style="gap:.5rem;justify-content:center;margin-top:.8rem"><button class="btn pri" data-again>مرة ثانية</button><button class="btn" data-x>تم</button></div></div>`;document.body.appendChild(w);
+ w.onclick=e=>{if(e.target.closest('[data-again]')){ST.dx.pzn=+$('#pzN').value||n;save();w.remove();pzPick()}else if(e.target.closest('[data-x]')||e.target===w){ST.dx.pzn=+$('#pzN').value||n;save();w.remove()}}}
+addEventListener('pointermove',e=>{if(PZ&&PZ.laser&&CUR.startsWith('pres-')){const l=$('#pLaser');if(l){l.style.left=e.clientX+'px';l.style.top=e.clientY+'px'}}},{passive:true});
+document.addEventListener('keydown',e=>{if(!PZ||!CUR.startsWith('pres-'))return;if(e.target.closest&&e.target.closest('input,textarea,select'))return;const k=e.key;
+ if(k==='ArrowLeft'||k===' '||k==='PageDown'){e.preventDefault();pzGo(PZ.cur+1)}else if(k==='ArrowRight'||k==='PageUp'){e.preventDefault();pzGo(PZ.cur-1)}else if(k==='Home')pzGo(0);else if(k==='End')pzGo(PZ.N-1);
+ else if(/^[rRق]$/.test(k)){const b=$('.pslide:not([hidden]) [data-rv]');if(b)b.click()}else if(/^[pPح]$/.test(k))pzToggle('ink');else if(/^[lLم]$/.test(k))pzToggle('laser');else if(/^[bBلا]$/.test(k))pzBlack();else if(/^[fFب]$/.test(k))pzFull();else if(/^[oOخ]$/.test(k))pzOver();
+ else if(k==='+'||k==='=')pzFont(.1);else if(k==='-')pzFont(-.1);else if(k==='Escape'){if($('.pover,.ppick')){$$('.pover,.ppick').forEach(x=>x.remove());return}if($('#pBlack')&&$('#pBlack').style.display==='block'){pzBlack();return}go('explain')}});
+document.addEventListener('view',e=>{if(!String(e.detail).startsWith('pres-')){if(PZ){PZ=null;document.body.style.overflow='';$$('.pover,.ppick').forEach(x=>x.remove())}}
+ if(/^l-\d-\d+$/.test(e.detail)&&!$('#pzBtn')){const h=$('.lhead .eyebrow');if(h)h.insertAdjacentHTML('beforeend',`<button class="pill" id="pzBtn" data-go="pres-${e.detail.slice(2)}" style="cursor:pointer;border-color:var(--ev);color:var(--ev)">👨‍🏫 اشرحه على السبورة</button>`)}});
+CHANGES.unshift({v:8,d:'2026-11-19',t:'الامتحانات النهائية، الملخص، ووضع الشرح',l:['🎓 الامتحانات النهائية: تحدد نوع الامتحان (شهري، نصف السنة، النهائي، الوزاري) وشنو داخل بيه بالضبط (فصول كاملة، دروس معيّنة، أو نص فصل)، ويطلعلك: نسبة تغطيتك، أسئلة الكتاب ضمن المنهج، امتحان تجريبي على نفس المنهج مع تحليل حسب الدرس، وخطة مذاكرة يومية لحد الموعد','📒 الملخص: لأي منهج تختاره، بترتيب الكتاب (1.1، 1.2…)، كل درس: خلاصته، الكلمات المفتاحية، مصطلحاته، والأسئلة المتوقعة مع أجوبتها، برقم الصفحة، وجاهز للطباعة','👨‍🏫 وضع الشرح للمدرس: كل درس يصير شرائح بترتيب الكتاب، نص الكتاب بخط كبير، الشرح بالعراقي بضغطة، الأنشطة التفاعلية تشتغل، أسئلة للصف بتصويت الأيدي، قلم للرسم، مؤشر ليزر، شاشة سوداء، مؤقت، اختيار طالب عشوائي، ملء الشاشة، والتنقل بالأسهم أو السحب','زر «👨‍🏫 اشرحه على السبورة» بكل درس، وعلامة ✓ للدروس اللي انشرحت']});
+</script>
+
 <script>
 'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
