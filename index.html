@@ -13319,6 +13319,39 @@ CHANGES.unshift({v:14,d:'2026-11-20',t:'مدينة المحقق: مدينة حي
 
 <script>
 'use strict';
+/* مدينة المحقق v15: camera modes (V) + free roam remembers where you left off */
+const CAMN=['📷 كاميرا عادية','🔭 كاميرا بعيدة','🎬 كاميرا گدام السيارة'];
+function cmNext(){if(!CT)return;CT.camMode=((CT.camMode||0)+1)%3;if(CT.camMode===2&&!CT.inCar)CT.camMode=0;ST.dx.cityCam=CT.camMode;save();ctPrompt(CAMN[CT.camMode]+' <kbd>V</kbd>')}
+const _cam4=window.ctCamera;window.ctCamera=function(dt){_cam4(dt);if(!CT)return;let m=CT.camMode||0;const c=CT.inCar;if(m===2&&!c)m=0;if(!m)return;const cam=CT.cam,P=CT.pl;
+ if(m===1){const tx=P.x,ty=c?1.4:1.55,tz=P.z;const k=c?1.55:1.9;let x=tx+(cam.position.x-tx)*k,y=ty+(cam.position.y-ty)*k+1.2,z=tz+(cam.position.z-tz)*k;for(let i=0;i<6&&ctInB(x,z,0);i++){x=tx+(x-tx)*.72;z=tz+(z-tz)*.72}cam.position.set(x,Math.max(.6,y),z);cam.lookAt(tx,ty+.3,tz)}
+ else{const K=CTK[c.m.userData.kind]||{L:2.5};const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);const f=K.L+.35;cam.position.set(c.x+fx*f,.95,c.z+fz*f);cam.lookAt(c.x+fx*(f+20),.9,c.z+fz*(f+20));cam.fov=68+Math.min(12,Math.abs(c.v)*.3);cam.updateProjectionMatrix()}};
+/* remember the spot (free roam only) */
+function spSave(){try{if(!CT||CT.mid!=='free'||!CT.pl)return;const P=CT.pl,c=CT.inCar;ST.dx.cityPos={x:+(c?c.x:P.x).toFixed(1),z:+(c?c.z:P.z).toFixed(1),yaw:+((c?c.yaw:P.yaw)||0).toFixed(2),car:!!c,t:Date.now()};save()}catch(e){}}
+const _stop4=window.ctStop;window.ctStop=function(){spSave();_stop4()};
+const _start4=window.ctStartMission;window.ctStartMission=function(id){_start4(id);try{if(CT)CT.camMode=ST.dx.cityCam||0;const S=ST.dx.cityPos;if(id!=='free'||!S||!CT||!CT.pl)return;if(Date.now()-S.t>30*864e5)return;
+ const q=ctPush(S.x,S.z,.5);CT.pl.x=q[0];CT.pl.z=q[1];CT.pl.yaw=S.yaw;CT.camYaw=S.yaw+Math.PI;const my=CT.my;if(my){const st=ctStreet(q[0]+4,q[1]);my.x=st&&st.d<20?st.x:q[0]+4;my.z=st&&st.d<20?st.z:q[1];my.yaw=S.yaw;my.v=0;ctPlace(my)}
+ ctSt('📍 رجعتك لمكانك','آخر مكان وگفت بيه بالتجوّل الحر')}catch(e){console.warn(e)}};
+/* keys + touch button */
+const _input4=window.ctInput;window.ctInput=function(){_input4();const kd=e=>{if(!CT||CT.modal)return;if(/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||''))return;if(e.code==='KeyV'&&!e.repeat){e.preventDefault();e.stopPropagation();cmNext()}};addEventListener('keydown',kd,true);CT.off.push(()=>removeEventListener('keydown',kd,true));
+ const ph=()=>spSave();addEventListener('pagehide',ph);CT.off.push(()=>removeEventListener('pagehide',ph));const iv=setInterval(spSave,20000);CT.off.push(()=>clearInterval(iv));
+ const tb=$('.cttb');if(tb&&!$('[data-v15]',tb)){tb.insertAdjacentHTML('beforeend','<button data-v15="V" aria-label="بدّل الكاميرا">🎥</button>');const b=$('[data-v15]',tb);b.addEventListener('touchstart',e=>{e.preventDefault();cmNext()},{passive:false});b.addEventListener('click',cmNext)}};
+/* start screen: mention V */
+document.addEventListener('view',e=>{if(e.detail!=='city')return;setTimeout(()=>{const k=document.querySelector('.ctkeys');if(k&&!k.dataset.v15){k.dataset.v15=1;k.insertAdjacentHTML('beforeend','<span><kbd>V</kbd> الكاميرا</span>')}},60)});
+</script>
+
+<script>
+'use strict';
+CHANGES.unshift({v:15,d:'2026-11-20',t:'مدينة المحقق: كاميرات جديدة وترجع لمكانك',l:[
+'🎥 زر V يبدّل الكاميرا: عادية، بعيدة تشوف الشارع كله، وكاميرا گدام السيارة مثل أفلام المطاردات',
+'📱 زر 🎥 بشاشة اللمس لنفس الشي',
+'💾 اللعبة تتذكر آخر كاميرا اخترتها',
+'📍 التجوّل الحر يرجعك لآخر مكان وگفت بيه، وسيارتك يمك',
+'⏱️ المكان ينحفظ وحده كل 20 ثانية وحتى لو سديت الصفحة فجأة'
+]});
+</script>
+
+<script>
+'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
 ST.visits=(ST.visits||0)+1;save();paintRing();
 if(!location.hash&&ST.last&&ST.last!=='home'&&!window.__wlOn){HIST.push('home');location.replace('#'+ST.last)}else render();
