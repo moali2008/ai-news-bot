@@ -13384,6 +13384,94 @@ CHANGES.unshift({v:16,d:'2026-11-20',t:'مدينة المحقق: تحدي الي
 ]});
 </script>
 
+<style>
+.gmhero{display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;width:100%;text-align:start;padding:1.1rem 1.2rem;border-radius:20px;border:1px solid rgba(245,197,24,.45);background:linear-gradient(120deg,rgba(245,197,24,.16),rgba(59,140,255,.12) 55%,rgba(10,16,28,.4));color:inherit;cursor:pointer;margin:.4rem 0 1rem}
+.gmhero .ic{font-size:2.6rem}.gmhero b{font-size:1.25rem;display:block}.gmhero small{color:var(--dim)}
+.gmstat{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.45rem}.gmstat span{font-size:.78rem;border:1px solid var(--line);border-radius:99px;padding:.1rem .55rem;background:rgba(255,255,255,.04)}
+.gmhero .go{font-weight:800;background:#f5c518;color:#111;border-radius:12px;padding:.5rem .9rem;white-space:nowrap}
+@media(max-width:560px){.gmhero{grid-template-columns:auto 1fr}.gmhero .go{grid-column:1/-1;text-align:center}}
+</style>
+<script>
+'use strict';
+/* الألعاب: own tab. Games leave "تدرّب" and live in "🎮 الألعاب" */
+(function(){const i=TABS.findIndex(t=>t[0]==='tab-train');if(!TABS.some(t=>t[0]==='tab-games'))TABS.splice(i+1,0,['tab-games','🎮','الألعاب'])})();
+const GMRE=/^(tab-games|city|s-games|g-\d|duel|speed|dcase|intr|case)$/;
+(function(){const _t=tabOf;window.tabOf=tabOf=function(r){return GMRE.test(r||'')?'tab-games':_t(r)}})();
+function gmCityStats(){try{const S=ST.dx.city||{},dn=Object.keys(S.done||{}).length,bd=(S.bd||[]).length;let dc='';if(typeof dcGoals==='function'){const g=dcGoals();dc=`<span>🗓️ تحدي اليوم ${g.filter(x=>x.ok).length}/4</span>`}
+ return`<div class="gmstat"><span>⭐ ${S.xp||0} XP</span><span>📁 ${dn}/5 قضايا</span><span>🏅 ${bd}/25 شارة</span>${dc}</div>`}catch(e){return''}}
+route('tab-games',()=>{const G=[1,2,3,4,5].filter(n=>ROUTES['g-(\\d)']||true);const names={1:'مدينة الأدلة',2:'ليلة الفدية',3:'التسريب الصامت',4:'شبكة الظل',5:'مدينة 2035'};
+ const html=`<div class="hub"><div class="eyebrow">العب وتعلّم بنفس الوقت</div><h1>🎮 الألعاب</h1>
+ <button class="gmhero" data-go="city"><span class="ic">🌆</span><span><b>مدينة المحقق: لوس أنجلوس</b><small>عالم مفتوح بشوارع وبنايات حقيقية: قضايا، مطاردات، تكسي، دورية، وأحداث شارع</small>${gmCityStats()}</span><span class="go">▶ العب</span></button>
+ <div class="hubg">
+ <section><h2>ألعاب الفصول (ثلاثية الأبعاد)</h2><div class="hubl">${[1,2,3,4,5].map(n=>`<button class="hubrow" data-go="g-${n}"><span class="ic">🕹️</span><span><b>${names[n]}</b><small>لعبة الفصل ${n}</small></span><span class="ch">‹</span></button>`).join('')}</div></section>
+ <section><h2>منافسة وتحدي</h2><div class="hubl">${[['duel','⚔️','تحدّي زميل','نفس الأسئلة ونقارن'],['speed','⏱️','سباق السرعة','أكثر أجوبة بوقت قصير'],['dcase','📁','قضية اليوم','سؤال بقصة كل يوم'],['intr','🗣️','الاستجواب','3 أرواح']].map(x=>`<button class="hubrow" data-go="${x[0]}"><span class="ic">${x[1]}</span><span><b>${x[2]}</b><small>${x[3]}</small></span><span class="ch">‹</span></button>`).join('')}</div></section>
+ </div></div>`;return{html,crumbs:[['tab-games','الألعاب']]}});
+/* تدرّب: swap the games group for one link to the games tab */
+(function(){const _tr=ROUTES['tab-train'];ROUTES['tab-train']=function(){const o=_tr();try{const d=document.createElement('div');d.innerHTML=o.html;const sec=[...d.querySelectorAll('section')].find(s=>/ألعاب ومنافسة/.test((s.querySelector('h2')||{}).textContent||''));
+ if(sec)sec.outerHTML=`<section><h2>الألعاب</h2><div class="hubl"><button class="hubrow" data-go="tab-games"><span class="ic">🎮</span><span><b>صارت بخانة لوحدها</b><small>مدينة المحقق، ألعاب الفصول، تحدّي زميل، سباق السرعة…</small></span><span class="ch">‹</span></button></div></section>`;o.html=d.innerHTML}catch(e){}return o}})();
+document.addEventListener('view',e=>{if(e.detail!=='tab-train')return;const kill=()=>{const c=document.getElementById('ctCard');c&&c.remove()};requestAnimationFrame(()=>requestAnimationFrame(kill));setTimeout(kill,120)});
+/* crumbs of games point to الألعاب */
+['city','s-games','g-(\\d)','duel','speed','dcase','intr'].forEach(k=>{const f=ROUTES[k];if(!f)return;ROUTES[k]=function(...a){const o=f(...a);if(o&&o.crumbs)o.crumbs=o.crumbs.map(c=>c[0]==='tab-train'?['tab-games','الألعاب']:c);return o}});
+if(typeof MQUICK!=='undefined'&&Array.isArray(MQUICK)&&!MQUICK.some(q=>q[0]==='tab-games'))try{MQUICK.unshift(['tab-games','🎮','الألعاب'])}catch(e){}
+</script>
+
+<style>
+.alic{position:relative;margin:1rem 0;padding:1.1rem 1.3rem 1rem;border-radius:20px;border:1px solid rgba(126,240,176,.35);background:linear-gradient(135deg,rgba(18,72,52,.38),rgba(10,16,28,.55));overflow:hidden}
+.alic::before{content:"";position:absolute;inset:auto -40px -60px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(126,240,176,.18),transparent 70%)}
+.alic .eyebrow{color:#7ef0b0}
+.alic q{display:block;font-family:var(--f-display);font-size:1.38rem;line-height:1.9;margin:.35rem 0;quotes:"«" "»";color:#f3fff8}
+.alic cite{font-style:normal;color:var(--dim);font-size:.84rem}
+.alic .row{gap:.45rem;margin-top:.6rem;flex-wrap:wrap}
+.alic .btn{font-size:.82rem;padding:.35rem .75rem}
+</style>
+<script>
+'use strict';
+/* أقوال أمير المؤمنين علي (ع) — نهج البلاغة (ترقيم الحكم حسب طبعة صبحي الصالح) */
+const ALI=[
+['قيمةُ كلِّ امرئٍ ما يُحسِنُه',81],
+['العلمُ وِراثةٌ كريمة، والآدابُ حُلَلٌ مُجدَّدة، والفِكرُ مِرآةٌ صافية',5],
+['لا غِنى كالعقل، ولا فقرَ كالجهل',54],
+['يا كُميل، العلمُ خيرٌ من المال؛ العلمُ يحرسُك وأنت تحرسُ المال',147],
+['إذا تمَّ العقلُ نقصَ الكلام',71],
+['الناسُ أعداءُ ما جهِلوا',172],
+['مَن نصبَ نفسَه للناس إماماً فليبدأ بتعليمِ نفسِه قبلَ تعليمِ غيرِه',73],
+['الفرصةُ تمرُّ مرَّ السحاب، فانتهِزوا فُرصَ الخير',21],
+['قلبُ الأحمقِ في فيه، ولسانُ العاقلِ في قلبه',41],
+['الحكمةُ ضالّةُ المؤمن، فخُذِ الحكمةَ ولو من أهلِ النفاق',80],
+['العلمُ مقرونٌ بالعمل، فمَن علِمَ عمِل',366],
+['ما أضمرَ أحدٌ شيئاً إلّا ظهرَ في فَلَتاتِ لسانِه وصفحاتِ وجهِه',26],
+['المرءُ مخبوءٌ تحتَ لسانِه',148],
+['مَن أطالَ الأملَ أساءَ العمل',36],
+['الصبرُ صبران: صبرٌ على ما تكره، وصبرٌ عمّا تحب',55],
+['مَن حذّرَك كمَن بشّرَك',59],
+['أعجزُ الناسِ مَن عجزَ عن اكتسابِ الإخوان',12],
+['رأيُ الشيخِ أحبُّ إليَّ من جَلَدِ الغلام',86],
+['الحِلمُ غطاءٌ ساتر، والعقلُ حُسامٌ قاطع',424],
+['إذا قدرتَ على عدوِّك فاجعلِ العفوَ عنه شكراً للقدرةِ عليه',11]];
+function aliIdx(){const d=new Date();const n=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);return(n+(ST.dx.aliOff||0))%ALI.length}
+function aliHTML(){const a=ALI[aliIdx()];return`<aside class="alic" id="aliC" aria-label="من كلام أمير المؤمنين"><div class="eyebrow">🕊️ من كلام أمير المؤمنين علي (عليه السلام)</div><q>${a[0]}</q><cite>نهج البلاغة — الحكمة ${a[1]}</cite><div class="row"><button class="btn" id="aliN">حكمة ثانية ↻</button><button class="btn" id="aliCp">📋 نسخ</button></div></aside>`}
+function aliMount(){if($('#aliC'))return;const v=$('.view');if(!v)return;const h=$('.dhead',v);const anchor=h?(h.closest('.card,.dcard,section')||h):v.firstElementChild;if(!anchor)return;anchor.insertAdjacentHTML('afterend',aliHTML());aliBind()}
+function aliBind(){const n=$('#aliN'),c=$('#aliCp');n&&(n.onclick=()=>{ST.dx.aliOff=((ST.dx.aliOff||0)+1)%ALI.length;save();const o=$('#aliC');o.outerHTML=aliHTML();aliBind()});
+ c&&(c.onclick=async()=>{const a=ALI[aliIdx()];const t=`«${a[0]}»\n— الإمام علي (ع)، نهج البلاغة، الحكمة ${a[1]}`;try{await navigator.clipboard.writeText(t);toast('انسخت ✓')}catch(e){toast('ما گدرت أنسخ')}})}
+document.addEventListener('view',e=>{if(e.detail==='home')setTimeout(aliMount,30)});
+/* the old core list follows the same source */
+try{SAYINGS.splice(0,SAYINGS.length,...ALI.map(a=>({t:a[0],s:'الإمام علي (ع) — نهج البلاغة، الحكمة '+a[1]})))}catch(e){}
+</script>
+
+<script>
+'use strict';
+CHANGES.unshift({v:17,d:'2026-11-20',t:'رجعت أقوال الإمام علي (ع) + خانة للألعاب',l:[
+'🕊️ رجعت بطاقة «من كلام أمير المؤمنين علي (عليه السلام)» للرئيسية، وكل يوم حكمة',
+'📜 20 حكمة من نهج البلاغة ويا رقم كل حكمة',
+'↻ زر «حكمة ثانية» تقلّب بيه الحكم، وزر نسخ حتى تشاركها',
+'🎮 خانة جديدة بالقائمة اسمها «الألعاب»',
+'🌆 مدينة المحقق بأعلى خانة الألعاب ويا إحصائياتك: XP والقضايا والشارات وتحدي اليوم',
+'🕹️ ألعاب الفصول الخمسة تبين مباشرة بخانة الألعاب',
+'⚔️ تحدّي زميل وسباق السرعة وقضية اليوم والاستجواب انتقلن لخانة الألعاب',
+'🎯 «تدرّب» صارت للدراسة والاختبارات والمراجعة بس، ويا رابط للألعاب'
+]});
+</script>
+
 <script>
 'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
