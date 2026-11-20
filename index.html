@@ -13352,6 +13352,40 @@ CHANGES.unshift({v:15,d:'2026-11-20',t:'مدينة المحقق: كاميرات 
 
 <script>
 'use strict';
+/* مدينة المحقق v16: daily challenge — 4 goals that reset every day, bonus XP when all are done */
+function dcDay(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function dcNow(){const S=CTS();const ev=S.ev||{},tx=S.tx||{};return{th:ev.th||0,wi:ev.wi||0,bd:(S.bd||[]).length,tx:tx.n||0}}
+function dcGet(){const S=CTS();if(!S.dc||S.dc.day!==dcDay()){const n=dcNow();const allBd=n.bd>=25;S.dc={day:dcDay(),base:n,km:0,got:{},done:false,bdGoal:allBd?0:2};save()}return S.dc}
+function dcGoals(){const D=dcGet(),n=dcNow(),b=D.base;return[
+ {k:'th',t:'🚨 امسك حرامي',v:n.th-b.th,of:1},
+ {k:'wi',t:'🙋 جاوب شاهد',v:n.wi-b.wi,of:1},
+ D.bdGoal?{k:'bd',t:'🏅 لمّ شارتين',v:n.bd-b.bd,of:2}:{k:'tx',t:'🚕 وصّل راكب بالتكسي',v:n.tx-b.tx,of:1},
+ {k:'km',t:'🚗 سوق 3 كم',v:+D.km.toFixed(1),of:3}].map(g=>Object.assign(g,{ok:g.v>=g.of}))}
+function dcCheck(){const D=dcGet();if(D.done)return;const G=dcGoals();let ch=false;G.forEach(g=>{if(g.ok&&!D.got[g.k]){D.got[g.k]=1;ch=true;ctSt('✅ تحدي اليوم: '+g.t,G.filter(x=>x.ok).length+'/4')}});
+ if(G.every(g=>g.ok)){D.done=true;ch=true;ctAward(150,'تحدي اليوم كامل');try{confetti()}catch(e){}SFX.ok&&SFX.ok();ctSt('🏆 خلصت تحدي اليوم!','+150 XP — باچر تحدي جديد')}if(ch)save()}
+function dcHTML(){const G=dcGoals(),D=dcGet();return`<div class="dcbox"><b>🗓️ تحدي اليوم ${D.done?'— خالص 🏆':''}</b><ul>${G.map(g=>`<li class="${g.ok?'ok':''}">${g.ok?'✅':'⬜'} ${g.t} <span>${Math.min(g.v,g.of)}/${g.of}</span></li>`).join('')}</ul><small>تخلصهن كلهن = 150 XP · يتجدد كل يوم</small></div>`}
+const _mission5=window.ctMission;window.ctMission=function(dt,now){_mission5(dt,now);if(!CT)return;try{const c=CT.inCar;if(c&&Math.abs(c.v)>1){const D=dcGet();D.km+=Math.abs(c.v)*dt/1000}if(!CT.dcT||now-CT.dcT>1000){CT.dcT=now;dcCheck()}}catch(e){}};
+const _pause5=window.ctPauseMenu;window.ctPauseMenu=function(){_pause5();const card=$('.ctmod .card');card&&card.insertAdjacentHTML('beforeend',dcHTML())};
+document.addEventListener('view',e=>{if(e.detail!=='city')return;setTimeout(()=>{const k=document.querySelector('.ctkeys');if(k&&!document.querySelector('.dcwrap')){try{k.insertAdjacentHTML('beforebegin','<div class="dcwrap">'+dcHTML()+'</div>')}catch(e){}}},80)});
+</script>
+<style>
+.dcbox{border:1px solid rgba(245,197,24,.45);background:rgba(245,197,24,.07);border-radius:12px;padding:.55rem .8rem;margin:.6rem 0;font-size:.9rem}
+.dcbox ul{list-style:none;margin:.35rem 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.2rem .8rem}
+.dcbox li span{color:var(--dim,#9ab);font-size:.8rem;margin-inline-start:.3rem}.dcbox li.ok{color:#7ef0b0}.dcbox small{color:var(--dim,#9ab)}
+</style>
+
+<script>
+'use strict';
+CHANGES.unshift({v:16,d:'2026-11-20',t:'مدينة المحقق: تحدي اليوم',l:[
+'🗓️ تحدي يومي بأربع مهام: امسك حرامي، جاوب شاهد، لمّ شارتين، وسوق 3 كم',
+'🏆 تخلصهن كلهن تاخذ 150 XP، والتحدي يتجدد كل يوم',
+'🚕 إذا لميت الـ25 شارة كلها، مهمة الشارات تصير توصيل راكب بالتكسي',
+'📋 التحدي يبين بشاشة البداية وبقائمة الإيقاف ويا التقدم'
+]});
+</script>
+
+<script>
+'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
 ST.visits=(ST.visits||0)+1;save();paintRing();
 if(!location.hash&&ST.last&&ST.last!=='home'&&!window.__wlOn){HIST.push('home');location.replace('#'+ST.last)}else render();
