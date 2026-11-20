@@ -13107,6 +13107,26 @@ function pbNext(){const P=CT.patrol;if(!P||!CT||!CT.inCar||!CT.inCar.police){CT&
 function pbTick(){const P=CT.patrol;if(!P)return;if(!CT.chase&&!P.wait){if(P.failed){P.failed=0;return}P.n++;P.lv=1+Math.floor(P.n/2);const S=st();S.pb=(S.pb||0)+1;save();P.wait=1;ctAward(20*P.lv,'دورية — مستوى '+P.lv);setTimeout(()=>{if(CT&&CT.patrol){P.wait=0;pbNext()}},4500)}}
 const _fail=window.ctFail;window.ctFail=function(why){if(CT&&CT.patrol){const P=CT.patrol;P.failed=1;P.wait=1;CT.chase=null;const b=$('#ctBar');b&&(b.hidden=true);const st0=$('#ctStars');st0&&(st0.textContent='',st0.classList.remove('flash'));ctBig('هرب!',why);ctObj('🚓 دورية: المشتبه بيه هرب — بلاغ جديد بعد شوية (T لإنهاء الدورية)');setTimeout(()=>{if(CT&&CT.patrol){P.wait=0;P.failed=0;pbNext()}},5000);return}_fail(why)};
 
+/* ---------- smooth car entry: walk to the driver's door, door sound, camera eases round ---------- */
+function doorSfx(open){const A=CT&&CT.au;if(!A||CT.mute)return;try{const t=A.currentTime;const n=A.createBufferSource(),len=A.sampleRate*.18|0,buf=A.createBuffer(1,len,A.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);n.buffer=buf;const f=A.createBiquadFilter();f.type='lowpass';f.frequency.value=open?1800:900;const g=A.createGain();g.gain.value=open?.12:.22;n.connect(f);f.connect(g);g.connect(A.destination);n.start(t);
+ const o=A.createOscillator();o.type='sine';o.frequency.setValueAtTime(open?140:95,t);o.frequency.exponentialRampToValueAtTime(45,t+.16);const og=A.createGain();og.gain.setValueAtTime(open?.08:.2,t);og.gain.exponentialRampToValueAtTime(.001,t+.2);o.connect(og);og.connect(A.destination);o.start(t);o.stop(t+.22)}catch(e){}}
+function doorPt(c){const W=(CTK[c.m.userData.kind]||{w:1.9}).w;return{x:c.x+Math.cos(c.yaw)*(W/2+.75)+Math.sin(c.yaw)*.35,z:c.z-Math.sin(c.yaw)*(W/2+.75)+Math.cos(c.yaw)*.35}}
+function enNearest(){const P=CT.pl;let best=null,bd=6;[CT.my,...CT.cars,...(CT.parked||[])].forEach(c=>{if(!c)return;const d=Math.hypot(c.x-P.x,c.z-P.z);if(d<bd){bd=d;best=c}});return best}
+function enTick(dt){const E=CT.entering;if(!E)return;const P=CT.pl,c=E.c,K=CT.keys;const el=(performance.now()-E.t0)/1000;
+ if(CT.inCar||K.KeyW||K.KeyA||K.KeyS||K.KeyD||K.ArrowUp||K.ArrowDown||K.ArrowLeft||K.ArrowRight||Math.hypot(c.x-P.x,c.z-P.z)>9){CT.entering=null;CT.joy=E.joy0||null;return}
+ const D=doorPt(c);const dx=D.x-P.x,dz=D.z-P.z,d=Math.hypot(dx,dz);
+ if(d<.45||el>2.6){CT.joy=E.joy0||null;CT.entering=null;doorSfx(true);P.yaw=c.yaw;const cy=CT.camYaw;c.v=0;E.go();if(CT.inCar){CT.camYaw=cy;CT.camT=0;setTimeout(()=>doorSfx(false),380)}return}
+ const fx=-Math.sin(CT.camYaw),fz=-Math.cos(CT.camYaw),rx=Math.cos(CT.camYaw),rz=-Math.sin(CT.camYaw);const ux=dx/d,uz=dz/d;const m=Math.min(1,.35+d*.5);CT.joy=[(ux*rx+uz*rz)*m,-(ux*fx+uz*fz)*m]}
+const _tg3=window.ctToggleCar;window.ctToggleCar=function(){if(CT.entering){CT.entering=null;CT.joy=null;return}
+ if(CT.inCar){const c=CT.inCar;doorSfx(true);_tg3();if(!CT.inCar){CT.pl.yaw=c.yaw+Math.PI/2;setTimeout(()=>doorSfx(false),300)}return}
+ const c=enNearest();if(!c){_tg3();return}const D=doorPt(c);if(Math.hypot(D.x-CT.pl.x,D.z-CT.pl.z)<.6){doorSfx(true);const cy=CT.camYaw;_tg3();if(CT.inCar){CT.camYaw=cy;CT.camT=0;setTimeout(()=>doorSfx(false),380)}return}
+ if(!CT.au&&window.ctAudio)try{ctAudio()}catch(e){}
+ CT.entering={c,t0:performance.now(),joy0:null,go:()=>{_tg3();const c2=CT.inCar;if(c2){if(c2.m.userData.kind==='taxi'&&!CT.tx)setTimeout(()=>ctPrompt('🚕 اضغط <b>T</b> لشغل التكسي'),900);else if(c2.police&&!CT.M&&!CT.patrol)setTimeout(()=>ctPrompt('🚓 اضغط <b>T</b> لدورية شرطة'),900)}}};ctPrompt('🚪 رايح للباب…')};
+
+/* ---------- auto quality: weak device → drop shadows, then resolution ---------- */
+function aqTick(){const Q=CT.aq||(CT.aq={t0:performance.now(),f:0,lvl:0,last:performance.now()});const now=performance.now();if(document.hidden||CT.modal){Q.t0=now;Q.f=0;return}Q.f++;const el=now-Q.t0;if(el<5000)return;const fps=Q.f*1000/el;Q.t0=now;Q.f=0;if(ST.dx.cityAQ===false)return;
+ if(fps<26&&Q.lvl<2){Q.lvl++;if(Q.lvl===1&&CT.R.shadowMap.enabled){CT.R.shadowMap.enabled=false;CT.S.traverse(o=>{if(o.material)o.material.needsUpdate=true});toast('⚙️ طفّيت الظلال حتى تصير اللعبة أسلس')}else{CT.R.setPixelRatio(Math.max(.7,CT.R.getPixelRatio()*.75));toast('⚙️ خففت دقة الصورة حتى تصير اللعبة أسلس')}}}
+
 /* ---------- rain ---------- */
 function rnInit(){const T=THREE;const N=1600;const g=new T.BufferGeometry();const a=new Float32Array(N*6);for(let i=0;i<N;i++){const x=(Math.random()-.5)*70,y=Math.random()*34,z=(Math.random()-.5)*70;a.set([x,y,z,x+.04,y-.9,z],i*6)}g.setAttribute('position',new T.BufferAttribute(a,3));
  const m=new T.LineSegments(g,new T.LineBasicMaterial({color:0xaec2d6,transparent:true,opacity:0,depthWrite:false}));m.frustumCulled=false;CT.S.add(m);CT.rain={m,a,N,k:0,want:0,next:performance.now()+120000+Math.random()*180000,until:0}}
@@ -13117,6 +13137,8 @@ function rnTick(dt,now){if(!CT.rain)rnInit();const R=CT.rain;const mode=(ST.dx.c
  if(R.k>.01){const gr=new THREE.Color(0x4a525c),gb=new THREE.Color(0x6b737d);CT.skyU&&(CT.skyU.top.value.lerp(gr,R.k*.75),CT.skyU.bot.value.lerp(gb,R.k*.7));CT.sun&&(CT.sun.intensity*=1-R.k*.6);CT.hemi&&(CT.hemi.intensity*=1-R.k*.25)}
  const f=CT.S.fog;if(f){f.near=250-200*R.k;f.far=1300-850*R.k;f.color.lerp(new THREE.Color(0x56606c),R.k*.6)}
  if(R.k>.3&&!R.said){R.said=1;ctSt('🌧️ دتمطر','الشارع يزلق — خفف السرعة')}if(R.k<.05)R.said=0;
+ const A=CT.au;if(A){if(!R.snd&&R.k>.02){try{const len=A.sampleRate*2,buf=A.createBuffer(1,len,A.sampleRate),d=buf.getChannelData(0);let b0=0,b1=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;b0=.99*b0+w*.05;b1=.6*b1+w*.4;d[i]=(b0+b1)*.5}const n=A.createBufferSource();n.buffer=buf;n.loop=true;const f=A.createBiquadFilter();f.type='bandpass';f.frequency.value=2400;f.Q.value=.4;const g=A.createGain();g.gain.value=0;n.connect(f);f.connect(g);g.connect(A.destination);n.start();R.snd={g}}catch(e){R.snd={g:{gain:{}}}}}
+  if(R.snd&&R.snd.g.gain)R.snd.g.gain.value=CT.mute||CT.modal?0:R.k*(CT.inCar?.05:.09)}
  CT.wet=R.k}
 
 /* ---------- garage: pick your own car ---------- */
@@ -13127,7 +13149,7 @@ window.ctGarage=ctGarage;window.txStart=txStart;
 /* ---------- keep the platform's single-letter shortcuts (H = home, T = tools…) out of the running game ---------- */
 addEventListener('keydown',e=>{if(typeof CT!=='undefined'&&CT&&CT.alive&&!e.ctrlKey&&!e.metaKey&&!e.altKey)e.stopPropagation()},true);
 /* ---------- hooks ---------- */
-const _mission=window.ctMission;window.ctMission=function(dt,now){_mission(dt,now);if(!CT)return;try{txTick(dt,now);rnTick(dt,now);pbTick()}catch(e){console.warn(e)}};
+const _mission=window.ctMission;window.ctMission=function(dt,now){_mission(dt,now);if(!CT)return;try{aqTick();enTick(dt);txTick(dt,now);rnTick(dt,now);pbTick()}catch(e){console.warn(e)}};
 const _clear=window.ctClearTargets;window.ctClearTargets=function(){const keepTx=CT&&CT.tx;if(keepTx)txClear();_clear()};
 const _toggle=window.ctToggleCar;window.ctToggleCar=function(){const was=CT.inCar;_toggle();if(was&&!CT.inCar&&!was.mine){CT.parked=(CT.parked||[]).filter(c=>c!==was);CT.parked.push(was);if(CT.parked.length>4)CT.parked.shift()}
  if(!was&&CT.inCar&&CT.inCar.m.userData.kind==='taxi'&&!CT.tx)setTimeout(()=>ctPrompt('🚕 اضغط <b>T</b> لشغل التكسي'),900);if(!was&&CT.inCar&&CT.inCar.police&&!CT.M&&!CT.patrol)setTimeout(()=>ctPrompt('🚓 اضغط <b>T</b> لدورية شرطة'),900);if(was&&!CT.inCar&&CT.patrol)pbToggle()};
@@ -13172,12 +13194,16 @@ CHANGES.unshift({v:12,d:'2026-11-20',t:'مدينة المحقق: سيارات ح
 '📱 زرّين جداد بشاشة اللمس: 🚕 للتكسي/الدورية و🔑 لتبديل السيارة',
 '📊 عدّاد ركاب التكسي واعتقالات الدورية بقائمة الإيقاف',
 '🌧️ مطر حقيقي: يجي ويروح وحده، والسما تغيم والضباب يقرب',
+'🔊 صوت المطر يعلى وينزل ويا شدته، وأخف داخل السيارة',
 '🌦️ اختيار الطقس من قائمة الإيقاف: يتغير وحده، صاحي، أو مطر',
+'🚪 الصعود للسيارة صار واقعي: الشخصية تمشي لباب السائق، صوت فتح وسد الباب، والكاميرا تلف بنعومة',
 '🔑 الكراج: اختار سيارتك من قائمة الإيقاف (شرطة، مسل، لورايدر، تاكسي، بيك أب)',
 '⌨️ زر G يبدّل سيارتك بسرعة وانت ماشي',
 '💾 اللعبة تتذكر سيارتك المفضلة بالمرة الجاية',
 '🔧 إصلاح: زر H (السرينة) وT ما عادت تطلعك من اللعبة للرئيسية أو الأدوات',
 '🔧 إصلاح: السيارة اللي تستعيرها من الشارع تكدر ترجع تصعدها بعد ما تنزل',
+'⚙️ جودة تلقائية: إذا الجهاز ضعيف اللعبة تطفي الظلال وتخفف الدقة وحدها حتى تبقى سلسة',
+'🪶 مجسمات السيارات مخففة (6 آلاف مثلث بدل 20) بنفس الشكل — أسرع بالتحميل والتشغيل',
 '🧩 نظام جاهز ينقل حركات المشي والركض لأي شخصية جديدة — شخصيتك تدخل أول ما تتوفر',
 '📝 ذكر مصدر مجسمات السيارات (Tripo AI) بشاشة اللعبة'
 ]});
