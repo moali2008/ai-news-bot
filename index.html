@@ -13245,6 +13245,78 @@ CHANGES.unshift({v:13,d:'2026-11-20',t:'مدينة المحقق: GPS بالشو�
 ]});
 </script>
 
+<style>
+.ctfact{position:absolute;top:74px;left:50%;transform:translateX(-50%);width:min(520px,calc(100% - 24px));background:rgba(9,13,21,.93);border:1px solid #f5c518;border-radius:14px;padding:.7rem .9rem;color:#fff;z-index:30;direction:rtl;font-size:.92rem;line-height:1.55;box-shadow:0 10px 30px rgba(0,0,0,.45);cursor:pointer;animation:ctfIn .35s ease}
+.ctfact b{color:#f5c518}.ctfact p{margin:.35rem 0}.ctfact .a{color:#7ef0b0;font-weight:700}.ctfact .w{color:#c9d4e3;font-size:.86rem}.ctfact small{color:#8fa1b8}
+@keyframes ctfIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+</style>
+<script>
+'use strict';
+/* مدينة المحقق v14: badges reveal a fact from the book (with a light beam + radar hint), and random street events (phone thief chase, witness question) */
+
+/* ---------- badges → book facts ---------- */
+function evFact(i){const A=allQ().filter(q=>Array.isArray(q.o)&&q.why&&q.t!=='tf');if(!A.length)return null;return A[(i*37+11)%A.length]}
+function evCard(q,n){const W=$('#ctW');if(!W||!q)return;let d=$('#ctFact');if(d)d.remove();d=document.createElement('div');d.id='ctFact';d.className='ctfact';
+ d.innerHTML=`<b>🏅 ${n}/25 — معلومة من الكتاب</b><p>${q.q}</p><p class="a">✓ ${q.o[q.a]}</p>${q.why?`<p class="w">${q.why}</p>`:''}<small>الفصل ${q.ch} · ${pg(q.p)} — اضغط حتى تنسد</small>`;
+ d.onclick=()=>d.remove();W.appendChild(d);clearTimeout(CT.factT);CT.factT=setTimeout(()=>{d.isConnected&&d.remove()},12000)}
+const _badges=window.ctBadges;window.ctBadges=function(){_badges();try{const T=THREE;const g=new T.CylinderGeometry(.22,.22,46,8,1,true),m=new T.MeshBasicMaterial({color:0xffd34d,transparent:true,opacity:.16,depthWrite:false,blending:T.AdditiveBlending});
+ (CT.badges||[]).forEach(b=>{if(b.got||!b.m)return;const s=new T.Mesh(g,m);s.position.set(b.x,23,b.z);s.frustumCulled=false;CT.S.add(s);b.beam=s})}catch(e){console.warn(e)}};
+const _getBadge=window.ctGetBadge;window.ctGetBadge=function(b){if(b.beam){CT.S.remove(b.beam);b.beam=null}_getBadge(b);try{evCard(evFact(b.i),CTS().bd.length)}catch(e){}};
+
+/* ---------- random street events ---------- */
+function evS(){const S=CTS();S.ev=S.ev||{th:0,wi:0,miss:0};return S.ev}
+function evOn(){return ST.dx.cityEv!=='off'}
+function evNpc(x,z,clip,col){const T=THREE;const m=T.SkeletonUtils.clone(CT.gltf.scene);const c=new T.Color(col);m.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.material.color=c;q.castShadow=false;q.frustumCulled=false}});m.position.set(x,0,z);CT.S.add(m);
+ const mx=new T.AnimationMixer(m);const a=CT.gltf.animations.find(c=>c.name===clip)||CT.gltf.animations[0];a&&mx.clipAction(a).play();return{m,mx}}
+function evSpot(dmin,dmax){const P=CT.inCar||CT.pl;const C=[];for(const n of CT.nodes.values()){const d=Math.hypot(n.x-P.x,n.z-P.z);if(d>=dmin&&d<=dmax)C.push(n)}if(!C.length){for(const n of CT.nodes.values()){const d=Math.hypot(n.x-P.x,n.z-P.z);if(d>=dmin*.6&&d<=dmax*2.2)C.push(n)}}if(!C.length)return null;const n=C[(Math.random()*C.length)|0];return ctPush(n.x+(Math.random()-.5)*6,n.z+(Math.random()-.5)*6,.8)}
+function evClear(){const E=CT.ev;if(!E)return;[E.npc&&E.npc.m,E.mk,E.arrow].forEach(o=>o&&CT.S.remove(o));CT.ev=null}
+function evStart(kind){if(!CT.gltf)return false;const q=evSpot(kind==='th'?28:22,kind==='th'?48:45);if(!q)return false;const T=THREE;
+ if(kind==='th'){const n=evNpc(q[0],q[1],'Run',0xb02a2a);const ar=new T.Mesh(new T.ConeGeometry(.35,.7,4),new T.MeshBasicMaterial({color:0xff3b3b}));ar.rotation.x=Math.PI;CT.S.add(ar);
+  CT.ev={k:'th',npc:n,x:q[0],z:q[1],arrow:ar,t:0,lim:75,vx:0,vz:0};ctSt('🚨 حرامي سرق موبايل!','الحگه وامسكه — النقطة الحمرة بالرادار');SFX.bad&&SFX.bad()}
+ else{const n=evNpc(q[0],q[1],'Idle',0x2a7bd6);const mk=ctMarkerMesh(q[0],q[1],0x3aa0ff);CT.ev={k:'wi',npc:n,mk,x:q[0],z:q[1],t:0,lim:120};ctSt('🙋 شاهد يريد يحچي وياك','روح للعلامة الزرگة بالرادار')}
+ return true}
+function evDone(win,kind){const S=evS();if(win){if(kind==='th')S.th++;else S.wi++}else S.miss++;save()}
+function evTick(dt,now){if(!CT||!CT.gltf)return;const E=CT.ev;
+ if(!E){if(!evOn()||CT.M||CT.tx||CT.patrol||CT.modal)return;CT.evNext=CT.evNext||now+70000+Math.random()*50000;if(now<CT.evNext)return;CT.evNext=now+100000+Math.random()*90000;evStart(Math.random()<.55?'th':'wi');return}
+ if(CT.modal)return;const P=CT.inCar||CT.pl;E.t+=dt;E.npc.mx.update(dt);
+ if(E.k==='th'){const dx=E.x-P.x,dz=E.z-P.z,d=Math.hypot(dx,dz)||1;const sp=d<40?5.3:3.2;const tx=dx/d,tz=dz/d;E.vx+=(tx*sp-E.vx)*Math.min(1,dt*2.5)+(Math.random()-.5)*.6;E.vz+=(tz*sp-E.vz)*Math.min(1,dt*2.5)+(Math.random()-.5)*.6;
+  let nx=E.x+E.vx*dt,nz=E.z+E.vz*dt;const q=ctPush(nx,nz,.5);if(Math.hypot(q[0]-nx,q[1]-nz)>.01){E.vx=-E.vz*.8;E.vz=E.vx*.8}E.x=q[0];E.z=q[1];
+  E.npc.m.position.set(E.x,0,E.z);E.npc.m.rotation.y=Math.atan2(E.vx,E.vz)+Math.PI;E.arrow.position.set(E.x,2.6+Math.sin(now/180)*.15,E.z);E.arrow.rotation.y+=dt*3;
+  if(d<(CT.inCar?4.2:2.4)){const ch=Math.random()<.5?2:3;evClear();SFX.ok&&SFX.ok();ctSt('✋ مسكته!','رجّع الموبايل — هسه جاوب صح');
+   ctQuizOne(ch,r=>{ctAward(r?70:25,r?'مسكت الحرامي + جواب صح':'مسكت الحرامي');evDone(true,'th')},'🚨 الموبايل المسروق — سؤال من الفصل '+ch);return}
+  if(E.t>E.lim||d>160){evClear();evDone(false);ctSt('💨 هرب الحرامي','المرة الجاية أسرع');return}}
+ else{const d=Math.hypot(E.x-P.x,E.z-P.z);E.npc.m.lookAt(P.x,0,P.z);E.npc.m.rotation.y+=Math.PI;
+  if(d<(CT.inCar?5:3)&&(!CT.inCar||Math.abs(CT.inCar.v)<4)){const ch=1+((Math.random()*5)|0);evClear();ctQuizOne(ch,r=>{ctAward(r?50:10,r?'شهادة الشاهد':'حاولت');evDone(true,'wi')},'🙋 الشاهد يسألك — الفصل '+ch);return}
+  if(E.t>E.lim){evClear();evDone(false);ctSt('🙋 الشاهد مشى','');return}}}
+
+/* ---------- radar: nearby badges + event target ---------- */
+const _radar3=window.ctRadar;window.ctRadar=function(){_radar3();if(!CT)return;const cv=$('#ctRad');if(!cv)return;const g=cv.getContext('2d'),R=cv.width/2,P=CT.inCar||CT.pl;const zoom=CT.inCar?(Math.abs(CT.inCar.v)>15?.75:1):1.4;const c=Math.cos(CT.camYaw),sn=Math.sin(CT.camYaw);
+ const toR=(x,z)=>{const dx=(x-P.x)*zoom,dz=(z-P.z)*zoom;return[R+dx*c-dz*sn,R+dx*sn+dz*c]};
+ g.save();g.beginPath();g.arc(R,R,R-3,0,7);g.clip();(CT.badges||[]).forEach(b=>{if(b.got)return;const d=Math.hypot(b.x-P.x,b.z-P.z);if(d>65)return;const [x,y]=toR(b.x,b.z);g.fillStyle='rgba(255,211,77,'+(1-d/80)+')';g.beginPath();g.arc(x,y,4,0,7);g.fill()});g.restore();
+ const E=CT.ev;if(E){let [bx,by]=toR(E.x,E.z);const dd=Math.hypot(bx-R,by-R),lim=R-12;if(dd>lim){bx=R+(bx-R)/dd*lim;by=R+(by-R)/dd*lim}g.fillStyle=E.k==='th'?'#ff3b3b':'#3aa0ff';g.strokeStyle='#000';g.lineWidth=2.5;g.beginPath();g.arc(bx,by,7+(E.k==='th'?Math.sin(performance.now()/120)*1.5:0),0,7);g.fill();g.stroke()}};
+
+/* ---------- hooks ---------- */
+const _mission3=window.ctMission;window.ctMission=function(dt,now){_mission3(dt,now);if(!CT)return;try{evTick(dt,now);const t=now/1000;(CT.badges||[]).forEach(b=>{if(b.m&&!b.got)b.m.rotation.z=t*1.6})}catch(e){console.warn(e)}};
+const _pause3=window.ctPauseMenu;window.ctPauseMenu=function(){_pause3();const card=$('.ctmod .card');if(!card)return;const S=evS();
+ card.insertAdjacentHTML('beforeend',`<div class="row" style="gap:.5rem;margin-top:.6rem;flex-wrap:wrap;align-items:center;border-top:1px solid rgba(255,255,255,.12);padding-top:.6rem"><b>🚨 أحداث الشارع</b><label class="chip"><select id="ctEvOn"><option value="on" ${evOn()?'selected':''}>تشتغل</option><option value="off" ${evOn()?'':'selected'}>مطفية</option></select></label><span style="color:var(--dim);font-size:.85rem">حرامية انمسكوا: ${S.th} · شهود: ${S.wi} · فاتت: ${S.miss}</span></div><p style="color:var(--dim);font-size:.82rem;margin:.4rem 0 0">💡 كل شارة ذهبية تكشفلك معلومة من الكتاب — دوّر على الضوء الأصفر بالسما</p>`);
+ const s=$('#ctEvOn');s&&(s.onchange=()=>{ST.dx.cityEv=s.value;save();if(s.value==='off')evClear()})};
+</script>
+
+<script>
+'use strict';
+CHANGES.unshift({v:14,d:'2026-11-20',t:'مدينة المحقق: مدينة حيّة — أحداث شارع ومعلومات من الكتاب',l:[
+'🚨 أحداث شارع عشوائية تصير وانت تتجول: حرامي يسرق موبايل ويهرب',
+'🏃 الحگ الحرامي مشي أو بالسيارة وامسكه قبل 75 ثانية، بعدها جاوب سؤال عن أدلة الموبايل',
+'🙋 شاهد يأشرلك بالشارع: روحله ويسألك سؤال من الكتاب',
+'🔴 الحرامي نقطة حمرة والشاهد نقطة زرگة بالرادار',
+'🏅 كل شارة ذهبية صارت تكشفلك معلومة من الكتاب ويا رقم الصفحة',
+'💡 عمود ضوء أصفر بالسما فوگ كل شارة حتى تلگاها من بعيد',
+'🟡 الشارات القريبة تبين نقاط صفرة بالرادار',
+'⏸ إحصائيات أحداث الشارع بقائمة الإيقاف، وتكدر تطفيها إذا تريد هدوء',
+'🚫 الأحداث ما تقاطع القضايا ولا شغل التكسي والدورية'
+]});
+</script>
+
 <script>
 'use strict';
 $('#logoTop').innerHTML=logo(28,'t');
